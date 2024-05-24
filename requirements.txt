@@ -1,0 +1,9 @@
+Flask
+Flask-SQLAlchemy
+Flask-Login
+psycopg2-binary
+Flask-Migrate
+werkzeug
+python-dotenv
+boto3
+awscli

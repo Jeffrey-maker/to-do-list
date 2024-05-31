@@ -7,3 +7,9 @@ werkzeug
 python-dotenv
 boto3
 awscli
+flask_cognito
+pycognito
+qrcode
+pyotp
+bcrypt
+config

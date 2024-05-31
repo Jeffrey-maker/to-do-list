@@ -93,6 +93,16 @@
         .delete-button:hover {
             background: #cc0000;
         }
+        .form-group a {
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            color: #007BFF;
+            text-decoration: none;
+        }
+        .form-group a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -120,7 +130,10 @@
                 </li>
             {% endfor %}
         </ul>
-        <a href="{{ url_for('main.logout') }}" class="sign-out">Sign Out</a>
+        <div class="form-group">
+            <a href="{{ url_for('main.logout') }}" class="sign-out">Sign Out</a>
+        </div>
+        
     </div>
 </body>
 </html>

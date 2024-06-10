@@ -103,6 +103,11 @@
         .form-group a:hover {
             text-decoration: underline;
         }
+        .note-description {
+            font-size: 14px;
+            color: #888;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -119,9 +124,10 @@
             {% for note in notes %}
                 <li>
                     <div>
-                        <p><strong>{{ note.title }}</strong>: {{ note.description }}</p>
-                        {% if note.file_path %}
-                            <img src="{{ note.file_path }}" alt="Note image"/>
+                        <p><strong>{{ note.title }}</strong></p>
+                        <p class="note-description">{{ note.description }}</p>
+                        {% if note.presigned_url %}
+                            <img src="{{ note.presigned_url }}" alt="Note image"/>
                         {% endif %}
                     </div>
                     <form class="delete-form" action="{{ url_for('main.delete', note_id=note.id) }}" method="POST">

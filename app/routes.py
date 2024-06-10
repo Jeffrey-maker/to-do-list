@@ -1,7 +1,8 @@
 import sys
 import traceback
-from flask import Blueprint, current_app, render_template, redirect, session, url_for, request, flash
+from flask import Blueprint, current_app, render_template, redirect, session, url_for, request, jsonify, flash 
 from flask_login import login_user, login_required, logout_user, current_user
+import requests
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import boto3
@@ -14,12 +15,17 @@ import qrcode
 from io import BytesIO
 import pyotp
 import uuid
+import re
+
 
 import app
 from .models import db, User, Note
 import os
+import logging
 
 main = Blueprint('main', __name__)
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 def get_secret_hash(username, client_id, client_secret):
     message = username + client_id
@@ -49,37 +55,46 @@ def create_user_folder_if_not_exists(s3, bucket_name, username):
         return False
     return True
 
-def upload_file_to_s3(file, bucket_name, username, acl="private"):
+def upload_file_to_s3(bucket_name, username, filename, expiration=3600):
     s3 = boto3.client(
         "s3",
+        "us-east-2",
         aws_access_key_id=current_app.config['S3_KEY'],
         aws_secret_access_key=current_app.config['S3_SECRET']
     )
 
     folder_name = f"{username}/"
+    object_name = f"{folder_name}{filename}"
     # Check if the folder exists by attempting to list its contents
     if not create_user_folder_if_not_exists(s3, bucket_name, username):
         return None
 
     try:
-        folder_name = f"{username}/"
-        filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
-        s3.upload_fileobj(
-            file,
-            bucket_name,
-            folder_name+filename,
-            ExtraArgs={
-                "ContentType": file.content_type,
-                "ACL": acl
-            }
+        response = s3.generate_presigned_post(
+            Bucket=bucket_name,
+            Key=object_name,
+            ExpiresIn=expiration,
+            Conditions=[
+                ["content-length-range", 0, 1048576]  # Restrict file size to 1MB
+            ]
         )
+        logger.debug(f"Response in upload is : {response}")
+        return response
     except Exception as e:
         print(f"Error uploading file: {e}")
         print(traceback.format_exc())
         return None
 
-    return f"{current_app.config['S3_LOCATION']}{folder_name+filename}"
-
+def check_mfa_setup_status(cognito_client, access_token):
+    response = cognito_client.get_user(
+        AccessToken=access_token
+    )
+    mfa_enabled = False
+    for attribute in response['UserAttributes']:
+        if attribute['Name'] == 'cognito:preferred_mfa_setting':
+            mfa_enabled = True
+            break
+    return mfa_enabled
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
@@ -97,58 +112,70 @@ def login():
             flash('User not found!', 'danger')
             return redirect(url_for('main.login'))
 
-        client = boto3.client('cognito-idp', region_name=current_app.config['COGNITO_REGION'])
-
-        secret_hash = get_secret_hash(username, current_app.config['COGNITO_APP_CLIENT_ID'], current_app.config['COGNITO_APP_CLIENT_SECRET'])
+        
+        cognito_client = get_cognito_client()
 
         try:
-            response = client.initiate_auth(
+            login_user(user)
+            user_details = cognito_client.admin_get_user(
+                UserPoolId=current_app.config['COGNITO_USERPOOL_ID'],
+                Username=username
+            )
+            email_verified = any(attr['Name'] == 'email_verified' and attr['Value'] == 'true' for attr in user_details['UserAttributes'])
+
+            if not email_verified:
+                flash('Email not confirmed. Please confirm your email.', 'warning')
+                logger.debug(f"Session with not verify email: {session}")
+                return redirect(url_for('main.confirm_user'))
+
+            response = cognito_client.initiate_auth(
+                ClientId=current_app.config['COGNITO_APP_CLIENT_ID'],
                 AuthFlow='USER_PASSWORD_AUTH',
                 AuthParameters={
                     'USERNAME': username,
                     'PASSWORD': password,
-                    'SECRET_HASH': secret_hash
-                },
-                ClientId=current_app.config['COGNITO_APP_CLIENT_ID']
+                    'SECRET_HASH':get_secret_hash(username, current_app.config['COGNITO_APP_CLIENT_ID'], current_app.config['COGNITO_APP_CLIENT_SECRET'])
+                }
             )
+            logger.debug(f"Response at login: {response}")
 
-            print("Login error", response, file=sys.stdout)
-            sys.stdout.flush()
-
-            login_user(user)
-
-            """
             if 'ChallengeName' in response:
-                session['cognito_session'] = response['Session']
-                flash('Additional verification required', 'warning')
-
-                # Handle different challenge names here
+                session['Session'] = response['Session']
+                session['USERNAME'] = username
                 if response['ChallengeName'] == 'MFA_SETUP':
-                    # Redirect to MFA setup page or handle it accordingly
+                    flash("MFA setup required. Please enter your MFA code.", 'info')
                     return redirect(url_for('main.setup_mfa'))
                 elif response['ChallengeName'] == 'SOFTWARE_TOKEN_MFA':
-                    # Redirect to MFA verification page or handle it accordingly
+                    flash("Please enter your MFA code.", 'info')
                     return redirect(url_for('main.verify_mfa'))
-                else:
-                    flash(f"Unexpected challenge: {response['ChallengeName']}", 'danger')
-                    return redirect(url_for('main.login'))
-            """
+            else:
+                id_token = response['AuthenticationResult']['IdToken']
+                access_token = response['AuthenticationResult']['AccessToken']
+                refresh_token = response['AuthenticationResult']['RefreshToken']
 
-            if current_user.is_two_factor_authentication_enabled == True:
-                return redirect(url_for('main.verify_mfa'))
-            else: 
-                return redirect(url_for('main.setup_mfa'))
+                mfa_enabled = check_mfa_setup_status(cognito_client, access_token)
+                if not mfa_enabled:
+                    flash("MFA setup required. Please set up your MFA.", 'info')
+                    return redirect(url_for('main.setup_mfa'))
 
-            flash('Login successful!', 'success')
-            
-            return redirect(url_for('main.notes'))
-        except ClientError as e:
-            flash(f"Login error: {e.response['Error']['Message']}", 'danger')
+                session['id_token'] = id_token
+                session['access_token'] = access_token
+                session['refresh_token'] = refresh_token
 
-            print("Login error", e, file=sys.stdout)
-            sys.stdout.flush()
+                user = User.query.filter_by(username=username).first()
+                if not user:
+                    user = User(username=username, email="")  # Assuming email is empty for now
+                    db.session.add(user)
+                    db.session.commit()
 
-            return redirect(url_for('main.login'))
+                flash("Login successful!", 'success')
+                return redirect(url_for('main.notes'))
+
+        except cognito_client.exceptions.NotAuthorizedException:
+            flash('Incorrect username or password', 'danger')
+        except cognito_client.exceptions.UserNotFoundException:
+            flash('User not found', 'danger')
+        
     return render_template('login.html')
 
 @main.route('/register', methods=['GET','POST'])
@@ -159,15 +186,30 @@ def register():
         password = request.form['new_password']
         confirm_password = request.form['confirm_password']
         email = request.form['email']
-        secret_token = pyotp.random_base32()
         cognito = get_cognito_client()
+        password_pattern = re.compile(
+            r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
+        )
+
+        if not re.match(password_pattern, password):
+            flash('Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character, including @, $, !, %, *, ?, &.', 'danger')
+            return redirect(url_for('main.register'))
 
         if password != confirm_password:
             flash('Passwords do not match!', 'danger')
-            return redirect(url_for('main.login'))
+            return redirect(url_for('main.register'))
+        
+        existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
+        if existing_user:
+            if existing_user.username == username:
+                flash('Username already exists!', 'danger')
+            if existing_user.email == email:
+                flash('Email already exists!', 'danger')
+            return redirect(url_for('main.register'))
+
 
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-        new_user = User(username=username, password=hashed_password, is_two_factor_authentication_enabled = False, email=email,secret_token=secret_token)
+        new_user = User(username=username, password=hashed_password, email=email)
         db.session.add(new_user)
         db.session.commit()
         
@@ -185,10 +227,10 @@ def register():
                     }
                 ]
             )
-            print(response, file=sys.stdout)
-            sys.stdout.flush()
             session['new_username'] = username
             session['new_email'] = email
+            session['new_password'] = password
+            session['secret_hash'] = secret_hash
             user = User.query.filter_by(username=username).first()
             login_user(user)
             flash('Sign-up successful!', 'success')
@@ -205,11 +247,13 @@ def confirm_user():
         flash('No username or email found in session. Please register first.', 'danger')
         return redirect(url_for('main.register'))
 
+    username = session['new_username']
+    password = session['new_password']
+
+    cognito = get_cognito_client()
+    
     if request.method == 'POST':
         confirmation_code = request.form.get('confirmation_code')
-        username = session['new_username']
-
-        cognito = get_cognito_client()
 
         try:
             response = cognito.confirm_sign_up(
@@ -219,39 +263,179 @@ def confirm_user():
                 SecretHash=get_secret_hash(username, current_app.config['COGNITO_APP_CLIENT_ID'], current_app.config['COGNITO_APP_CLIENT_SECRET'])
             )
 
+            auth_response = cognito.initiate_auth(
+                ClientId=current_app.config['COGNITO_APP_CLIENT_ID'],
+                AuthFlow='USER_PASSWORD_AUTH',
+                AuthParameters={
+                    'USERNAME': username,
+                    'PASSWORD': password,  # Use the same password provided during registration
+                    'SECRET_HASH': get_secret_hash(username, current_app.config['COGNITO_APP_CLIENT_ID'], current_app.config['COGNITO_APP_CLIENT_SECRET'])  # Include the SECRET_HASH
+                }
+            )
+            logger.debug(f"Response at confirm user: {auth_response}")
+            session['Session'] = auth_response['Session']
             flash('Email confirmed successfully!', 'success')
             return redirect(url_for('main.setup_mfa'))
         except ClientError as e:
             flash(f"Confirmation error: {e.response['Error']['Message']}", 'danger')
             return redirect(url_for('main.confirm_user'))
+        
+    try:
+        secret_hash = get_secret_hash(username, current_app.config['COGNITO_APP_CLIENT_ID'], current_app.config['COGNITO_APP_CLIENT_SECRET'])
+        cognito.resend_confirmation_code(
+            ClientId=current_app.config['COGNITO_APP_CLIENT_ID'],
+            Username=username,
+            SecretHash=secret_hash
+        )
+        flash(f'A new confirmation code has been sent to {username}.', 'info')
+        logger.debug(f"Resend email from login: {resend_confirmation_code}")
+    except ClientError as e:
+        flash(f"Error resending confirmation code: {e.response['Error']['Message']}", 'danger')
 
     email = session['new_email']
     return render_template('confirm_user.html', email=email)
 
+@main.route('/resend_confirmation_code', methods=['POST'])
+@login_required
+def resend_confirmation_code():
+    username = session.get('new_username')
+    if not username:
+        logger.error('No username found in session.')
+        return jsonify(success=False, message='No username found in session. Please register first.')
+
+    cognito = get_cognito_client()
+
+    try:
+        logger.info(f"Attempting to resend confirmation code for user: {username}")
+        response = cognito.resend_confirmation_code(
+            ClientId=current_app.config['COGNITO_APP_CLIENT_ID'],
+            Username=username,
+            SecretHash=get_secret_hash(username, current_app.config['COGNITO_APP_CLIENT_ID'], current_app.config['COGNITO_APP_CLIENT_SECRET'])
+        )
+        logger.info('Confirmation code resent successfully.')
+        return jsonify(success=True, message='Confirmation code resent successfully!')
+    except ClientError as e:
+        logger.error(f"ClientError while resending confirmation code: {e.response['Error']['Message']}")
+        return jsonify(success=False, message=f"Error resending confirmation code: {e.response['Error']['Message']}")
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        return jsonify(success=False, message=f"Unexpected error: {str(e)}")
+
 @main.route('/setup_mfa', methods=['GET', 'POST'])
 @login_required
 def setup_mfa():
-    secret = current_user.secret_token
-    print(secret, file=sys.stdout)
-    sys.stdout.flush()
-    uri = current_user.get_authentication_setup_uri()
-    base64_qr_image = get_b64encoded_qr_image(uri)
-    return render_template("setup_mfa.html", secret=secret, qr_image=base64_qr_image)
+    if request.method == 'GET':
+        cognito_client = get_cognito_client()
+        response = cognito_client.associate_software_token(Session=session['Session'])
+        logger.debug(f"Response at setup_mfa: {response}")
+        secret_code = response['SecretCode']
+        session['Session'] = response['Session']
+        uri = pyotp.totp.TOTP(secret_code).provisioning_uri(name=current_user.username, issuer_name="YourApp")
+        base64_qr_image = get_b64encoded_qr_image(uri)
+        session['Secret_code'] = secret_code
+        return render_template("setup_mfa.html", secret=secret_code, qr_image=base64_qr_image)
+
+    elif request.method == 'POST':
+        otp = request.form.get('otp')
+        if 'Session' not in session:
+            flash('Session is missing. Please log in again.', 'danger')
+            return redirect(url_for('main.login'))
+
+        cognito_client = get_cognito_client()
+
+        try:
+            username = session['new_username']
+            session_token = session['Session']
+
+            logger.debug(f"Username from session: {username}")
+            logger.debug(f"Session token: {session_token}")
+            logger.debug(f"OTP code: {otp}")
+
+            secret_hash = get_secret_hash(username, current_app.config['COGNITO_APP_CLIENT_ID'], current_app.config['COGNITO_APP_CLIENT_SECRET'])
+            logger.debug(f"Secret hash: {secret_hash}")
+            
+
+            response = cognito_client.verify_software_token(
+                Session=session_token,
+                UserCode=otp
+            )
+            logger.debug(f"Response from Cognito: {response}")
+
+            return redirect(url_for('main.login'))
+
+        except cognito_client.exceptions.NotAuthorizedException as e:
+            logger.error(f"Not authorized: {e}")
+            flash(f'Not authorized to verify the MFA code: {str(e)}', 'danger')
+        except cognito_client.exceptions.CodeMismatchException as e:
+            logger.error(f"Code mismatch: {e}")
+            flash(f'Invalid MFA code: {str(e)}', 'danger')
+        except cognito_client.exceptions.ExpiredCodeException as e:
+            logger.error(f"Expired code: {e}")
+            flash(f'The MFA code has expired: {str(e)}', 'danger')
+        except KeyError as e:
+            logger.error(f"Key error: {e}")
+            flash(f'Session or access token is missing: {str(e)}. Please log in again.', 'danger')
+            return redirect(url_for('main.login'))
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            flash(f'An unexpected error occurred: {str(e)}', 'danger')
+
+    return render_template("setup_mfa.html")
 
 @main.route('/verify_mfa', methods=['GET', 'POST'])
 @login_required
 def verify_mfa():
     if request.method == 'POST':
         otp = request.form.get('otp')
-        
-        if current_user.is_otp_valid(otp):
-            current_user.is_two_factor_authentication_enabled = True
-            db.session.commit()
-            flash("2FA verification successful. You are logged in!", 'success')
-            return redirect(url_for('main.notes'))
-        else:
-            flash("Invalid OTP. Please try again.", 'danger')
-    
+        cognito_client = get_cognito_client()
+
+        try:
+            response = cognito_client.respond_to_auth_challenge(
+                ClientId=current_app.config['COGNITO_APP_CLIENT_ID'],
+                ChallengeName='SOFTWARE_TOKEN_MFA',
+                Session=session['Session'],
+                ChallengeResponses={
+                    'USERNAME': session['new_username'],
+                    'SOFTWARE_TOKEN_MFA_CODE': otp,
+                    'SECRET_HASH': get_secret_hash(session['new_username'], current_app.config['COGNITO_APP_CLIENT_ID'], current_app.config['COGNITO_APP_CLIENT_SECRET'])
+                }
+            )
+            logger.debug(f"Response from verify: {response}")
+            if 'AuthenticationResult' in response:
+                id_token = response['AuthenticationResult']['IdToken']
+                access_token = response['AuthenticationResult']['AccessToken']
+                refresh_token = response['AuthenticationResult']['RefreshToken']
+                session['id_token'] = id_token
+                session['access_token'] = access_token
+                session['refresh_token'] = refresh_token
+                logger.debug(f"Session from verify: {session}")
+                flash("MFA setup completed successfully.", 'success')
+                return redirect(url_for('main.notes'))
+            else:
+                flash("Invalid MFA code. Please try again.", 'danger')
+
+        except cognito_client.exceptions.NotAuthorizedException as e:
+            logger.error(f"Not authorized: {e}")
+            logger.debug(traceback.format_exc())
+            flash('Not authorized to verify the MFA code.', 'danger')
+        except cognito_client.exceptions.CodeMismatchException as e:
+            logger.error(f"Code mismatch: {e}")
+            logger.debug(traceback.format_exc())
+            flash('Invalid MFA code.', 'danger')
+        except cognito_client.exceptions.ExpiredCodeException as e:
+            logger.error(f"Expired code: {e}")
+            logger.debug(traceback.format_exc())
+            flash('The MFA code has expired.', 'danger')
+        except KeyError as e:
+            logger.error(f"Key error: {e}")
+            logger.debug(traceback.format_exc())
+            flash(f'Session or access token is missing: {str(e)}. Please log in again.', 'danger')
+            return redirect(url_for('main.login'))
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            logger.debug(traceback.format_exc())
+            flash(f'An unexpected error occurred: {str(e)}', 'danger')
+
     return render_template("verify_mfa.html")
 
 def get_b64encoded_qr_image(uri):
@@ -271,25 +455,29 @@ def logout():
 @login_required
 def notes():
     try:
-        print("REQUEST NOTE", request, file=sys.stdout)
         if request.method == 'POST':
             title = request.form.get('title')
             description = request.form.get('description')
             file = request.files.get('file')
-            file_url = None
+            s3_object_key = None
+            presigned_post = None
 
             if file:
-                print(file)
-                try:  
-                    file_url = upload_file_to_s3(file, current_app.config['S3_BUCKET'], current_user.username)
-                    print(file_url)
-                except e:
-                    print(e)
+                try:
+                    filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+                    presigned_post = upload_file_to_s3(current_app.config['S3_BUCKET'], current_user.username, filename)
+                    current_app.logger.debug(f"Presigned Post: {presigned_post}")
+                    files = {'file': (file.filename, file.stream, file.content_type)}
+                    response = requests.post(presigned_post['url'], data=presigned_post['fields'], files=files)
+                    if response.status_code == 204:
+                        s3_object_key = f"{current_user.username}/{filename}"
+                    else:
+                        raise Exception("File upload failed")
+                except Exception as e:
+                    current_app.logger.error(f"Error uploading file: {e}")
+                    current_app.logger.error(traceback.format_exc())
 
-                print(file_url)
-                
-
-            note = Note(title=title, description=description, file_path=file_url, author=current_user)
+            note = Note(title=title, description=description, file_path=s3_object_key, author=current_user)
             db.session.add(note)
             db.session.commit()
             flash('Note added successfully!', 'success')
@@ -297,14 +485,50 @@ def notes():
 
         elif request.method == 'GET':
             user_notes = Note.query.filter_by(user_id=current_user.id).all()
-            print("Notes retrieved successfully")
-            return render_template('notes.html', notes=user_notes)
+            notes_with_presigned_urls = []
+            for note in user_notes:
+                presigned_url = None
+                if note.file_path:
+                    try:
+                        presigned_url = create_presigned_url(current_app.config['S3_BUCKET'], note.file_path)
+                        logger.debug(f"Presigned URL: {presigned_url}")
+                    except Exception as e:
+                        current_app.logger.error(f"Error generating presigned URL: {e}")
+                        current_app.logger.error(traceback.format_exc())
+                notes_with_presigned_urls.append({
+                    'id': note.id,
+                    'title': note.title,
+                    'description': note.description,
+                    'presigned_url': presigned_url
+                })
+            current_app.logger.debug("Notes retrieved successfully")
+            current_app.logger.debug(f"Notes with presigned url:  {notes_with_presigned_urls}")
+            return render_template('notes.html', notes=notes_with_presigned_urls)
+
 
     except Exception as e:
         print(f"Error: {e}")
         print(traceback.format_exc())
         return "An error occurred while processing your request.", 500
     
+def create_presigned_url(bucket_name, object_name, expiration=3600, region="us-east-2"):
+    s3_client = boto3.client(
+        "s3",
+        region_name=region,
+        aws_access_key_id=current_app.config['S3_KEY'],
+        aws_secret_access_key=current_app.config['S3_SECRET']
+    )
+    try:
+        response = s3_client.generate_presigned_url('get_object',
+                                                    Params={'Bucket': bucket_name, 'Key': object_name},
+                                                    ExpiresIn=expiration)
+    except Exception as e:
+        current_app.logger.error(f"Error generating presigned URL: {e}")
+        current_app.logger.error(traceback.format_exc())
+        return None
+
+    return response
+
 @main.route('/delete/<int:note_id>', methods=['POST'])
 @login_required
 def delete(note_id):
@@ -312,8 +536,31 @@ def delete(note_id):
     if note.author != current_user:
         flash('You do not have permission to delete this note.', 'danger')
         return redirect(url_for('main.notes'))
-
+    
+    if note.file_path:
+        try:
+            delete_file_from_s3(current_app.config['S3_BUCKET'], note.file_path)
+        except Exception as e:
+            current_app.logger.error(f"Error deleting file from S3: {e}")
+            current_app.logger.error(traceback.format_exc())
+            flash('An error occurred while deleting the file from S3.', 'danger')
+            return redirect(url_for('main.notes'))
+    
     db.session.delete(note)
     db.session.commit()
     flash('Note deleted successfully!', 'success')
     return redirect(url_for('main.notes'))
+
+def delete_file_from_s3(bucket_name, object_name, region="us-east-2"):
+    s3 = boto3.client(
+        "s3",
+        region_name=region,
+        aws_access_key_id=current_app.config['S3_KEY'],
+        aws_secret_access_key=current_app.config['S3_SECRET']
+    )
+    try:
+        s3.delete_object(Bucket=bucket_name, Key=object_name)
+        current_app.logger.debug(f"Deleted {object_name} from {bucket_name}")
+    except Exception as e:
+        current_app.logger.error(f"Error deleting file: {e}")
+        current_app.logger.error(traceback.format_exc())

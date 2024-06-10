@@ -89,8 +89,31 @@
 
     <script>
         function resendCode() {
-            // Add functionality to resend the code here
-            alert('Resend code functionality not implemented.');
+            
+            fetch("{{ url_for('main.resend_confirmation_code') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert('A new confirmation code has been sent to your email.');
+                } else {
+                    alert('Error resending confirmation code.');
+                }
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+                alert('An error occurred while resending the code.');
+            });
         }
     </script>
 </body>

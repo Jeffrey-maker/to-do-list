@@ -1,0 +1,10 @@
+pip install virtualenv
+
+virtualenv venv
+
+pip install Flask
+
+pip install Flask SQLAlchemy
+
+pip install Flask-Migrate
+

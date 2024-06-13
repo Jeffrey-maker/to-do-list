@@ -7,6 +7,8 @@ import {
 } from "react-router-dom";
 import Register from "./pages/register.jsx";
 import Login from "./pages/Login.jsx";
+import MfaSetup from "./pages/MFA_Setup.jsx";
+import MfaVerify from "./pages/MFA_Verify.jsx";
 
 // import Write from "./pages/Write";
 // import Home from "./pages/Home";
@@ -41,6 +43,14 @@ const router = createBrowserRouter([
       {
         path: "/login",
         element: <Login />,
+      },
+      {
+        path: "/mfa-setup",
+        element: <MfaSetup/>,
+      },
+      {
+        path: "/mfa-verify",
+        element: <MfaVerify />,
       },
     ],
   },

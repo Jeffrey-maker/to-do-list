@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { Link, useNavigate } from "react-router-dom";
+import backgroundImage from "../images/background.jpg";
 
 const todolists = [
   {
@@ -48,44 +49,56 @@ function Notes() {
   };
 
   return (
-    <Container sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        My Notes
-      </Typography>
-      <List>
-        {notes.map((note) => (
-          <ListItem
-            key={note.id}
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <ListItemText
-              primary={note.title}
-              secondary={note.desc}
-              primaryTypographyProps={{ variant: "h6" }}
-            />
-            <Box>
-              <Button
-                sx={{
-                  mr: 2,
-                  width: "150px",
-                  backgroundcolor: "white",
-                  border: "1px solid teal",
-                  color: "teal",
-                }}
-                variant="outlined"
-                onClick={() => handleNavigate(note.id)}
-              >
-                Read More
-              </Button>
-            </Box>
-          </ListItem>
-        ))}
-      </List>
-    </Container>
+    <div
+      style={{
+        height: "100vh",
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: "cover",
+      }}
+    >
+      <Container
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          height: "calc(100vh - 250px)",
+        }}
+      >
+        <Typography variant="h4" component="h1" gutterBottom>
+          My Notes
+        </Typography>
+        <List>
+          {notes.map((note) => (
+            <ListItem
+              key={note.id}
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <ListItemText
+                primary={note.title}
+                secondary={note.desc}
+                primaryTypographyProps={{ variant: "h6" }}
+              />
+              <Box>
+                <Button
+                  sx={{
+                    mr: 2,
+                    width: "150px",
+                  }}
+                  variant="outlined"
+                  onClick={() => handleNavigate(note.id)}
+                >
+                  Read More
+                </Button>
+              </Box>
+            </ListItem>
+          ))}
+        </List>
+      </Container>
+    </div>
   );
 }
 

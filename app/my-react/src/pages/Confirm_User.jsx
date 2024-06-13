@@ -2,37 +2,69 @@ import React, { useState } from "react";
 import { Container, Box, Button, Typography, TextField } from "@mui/material";
 import backgroundImage from "../images/background.jpg";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { useLocation, useNavigate } from "react-router-dom";
 
-const ConfirmUser = ({ email, resendConfirmationCodeUrl }) => {
+const ConfirmUser = () => {
   const [confirmationCode, setConfirmationCode] = useState("");
+  const location = useLocation();
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const { email, resendConfirmationCodeUrl } = location.state;
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      // const response = await axios.post(
+      //   "http://localhost:8800/api/auth/verify-code",
+      //   {
+      //     email: email,
+      //     code: confirmationCode,
+      //   },
+      //   {
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //     },
+      //     withCredentials: true,
+      //   }
+      // );
+
+      // if (response.data.success) {
+      //   navigate("/mfa-setup");
+      // } else {
+      //   setError("Invalid confirmation code.");
+      // }
+      navigate("/mfa-setup", {
+        state: {
+          qrImage: confirmationCode,
+          secret: confirmationCode,
+        },
+      });
+    } catch (err) {
+      setError(err.response.data.message || "An error occurred.");
+    }
   };
 
   const resendCode = () => {
-    fetch(resendConfirmationCodeUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "same-origin",
-    })
-      .then((response) => {
-        if (response.redirected) {
-          window.location.href = response.url;
+    axios
+      .post(
+        resendConfirmationCodeUrl,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
         }
-        return response.json();
-      })
-      .then((data) => {
-        if (data.success) {
+      )
+      .then((response) => {
+        if (response.status === 200 && response.data.success) {
           alert("A new confirmation code has been sent to your email.");
         } else {
           alert("Error resending confirmation code.");
         }
       })
       .catch((error) => {
-        console.error("There was a problem with the fetch operation:", error);
+        console.error("There was a problem with the axios request:", error);
         alert("An error occurred while resending the code.");
       });
   };

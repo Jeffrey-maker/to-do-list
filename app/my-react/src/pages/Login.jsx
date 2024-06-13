@@ -86,14 +86,14 @@ const Login = () => {
           Login
         </Button>
         {err && <p>{err}</p>}
-        <span
+        {/* <span
           style={{
             fontSize: "15px",
             textAlign: "center",
           }}
         >
           Don't you have an account? <Link to="/register">Register</Link>
-        </span>
+        </span> */}
       </form>
     </div>
   );

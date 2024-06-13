@@ -10,7 +10,10 @@ import Login from "./pages/Login.jsx";
 import MfaSetup from "./pages/MFA_Setup.jsx";
 import MfaVerify from "./pages/MFA_Verify.jsx";
 
-// import Write from "./pages/Write";
+import Note from "./pages/Note.jsx";
+import Notes from "./pages/Notes.jsx";
+
+import Write from "./pages/Write.jsx";
 // import Home from "./pages/Home";
 import Navbar from "./components/Navbar";
 
@@ -32,10 +35,18 @@ const router = createBrowserRouter([
       //   path: "/",
       //   element: <Home />,
       // },
-      // {
-      //   path: "/write",
-      //   element: <Write />,
-      // },
+      {
+        path: "/write",
+        element: <Write />,
+      },
+      {
+        path: "/notes",
+        element: <Notes />,
+      },
+      {
+        path: "/note/:id",
+        element: <Note />,
+      },
       {
         path: "/register",
         element: <Register />,
@@ -46,7 +57,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/mfa-setup",
-        element: <MfaSetup/>,
+        element: <MfaSetup />,
       },
       {
         path: "/mfa-verify",

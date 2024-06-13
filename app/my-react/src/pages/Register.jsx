@@ -82,14 +82,14 @@ const Register = () => {
           Register
         </Button>
         {err && <p>{err}</p>}
-        <span
+        {/* <span
           style={{
             fontSize: "15px",
             textAlign: "center",
           }}
         >
           Do you have an account? <Link to="/login">Login</Link>
-        </span>
+        </span> */}
       </form>
     </div>
   );

@@ -23,10 +23,15 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:8800/api/auth/register", inputs, {
-        withCredentials: true,
+      // await axios.post("http://localhost:8800/api/auth/register", inputs, {
+      //   withCredentials: true,
+      // });
+      navigate("/confirm-user", {
+        state: {
+          email: inputs.email,
+          resendConfirmationCodeUrl: "http://localhost:8800/api/auth/resend",
+        },
       });
-      navigate("/confirm-user");
     } catch (err) {
       setError(err.response.data);
     }
@@ -38,13 +43,19 @@ const Register = () => {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
         height: "100vh",
         background: `url(${backgroundImage}) no-repeat center center fixed`,
         backgroundSize: "cover",
       }}
     >
-      <h1 style={{ fontSize: "50px", color: "black", marginBottom: "20px" }}>
+      <h1
+        style={{
+          fontSize: "50px",
+          color: "black",
+          marginBottom: "20px",
+          marginTop: "100px",
+        }}
+      >
         Register
       </h1>
       <form
@@ -78,7 +89,12 @@ const Register = () => {
           name="password"
           onChange={handleChange}
         />
-        <Button variant="contained" color="primary" type="submit">
+        <Button
+          variant="contained"
+          color="primary"
+          type="submit"
+          onClick={handleSubmit}
+        >
           Register
         </Button>
         {err && <p>{err}</p>}

@@ -26,11 +26,11 @@ const Login = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      await axios.post("http://localhost:8800/api/auth/login", inputs, {
-        withCredentials: true,
-      });
-      await login(inputs);
-      navigate("/");
+      // await axios.post("http://localhost:8800/api/auth/login", inputs, {
+      //   withCredentials: true,
+      // });
+      // await login(inputs);
+      navigate("/mfa-verify");
     } catch (err) {
       setError(err.response.data);
     }
@@ -42,7 +42,7 @@ const Login = () => {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
+
         height: "100vh",
         background: `url(${backgroundImage}) no-repeat center center fixed`,
         backgroundSize: "cover",
@@ -53,7 +53,14 @@ const Login = () => {
           {msg.text}
         </div>
       ))}
-      <h1 style={{ fontSize: "50px", color: "black", marginBottom: "20px" }}>
+      <h1
+        style={{
+          fontSize: "50px",
+          color: "black",
+          marginBottom: "20px",
+          marginTop: "130px",
+        }}
+      >
         Login
       </h1>
 

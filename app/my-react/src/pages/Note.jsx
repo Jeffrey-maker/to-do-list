@@ -7,6 +7,7 @@ import postimg from "../images/post.jpg";
 import { IconButton } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import backgroundImage from "../images/background.jpg";
 
 const Single = () => {
   const [post, setPost] = useState({});
@@ -37,10 +38,10 @@ const Single = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`http://localhost:8800/api/posts/${postId}`, {
-        withCredentials: true,
-      });
-      navigate("/");
+      // await axios.delete(`http://localhost:8800/api/posts/${postId}`, {
+      //   withCredentials: true,
+      // });
+      navigate("/notes");
     } catch (err) {
       console.log(err);
     }
@@ -62,6 +63,9 @@ const Single = () => {
         justifyContent: "center",
         minHeight: "100vh",
         padding: "20px",
+        height: "100vh",
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: "cover",
       }}
     >
       <div style={{ maxWidth: "800px", width: "100%" }}>

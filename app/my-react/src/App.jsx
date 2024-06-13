@@ -15,7 +15,7 @@ import Notes from "./pages/Notes.jsx";
 
 import Write from "./pages/Write.jsx";
 import ConfirmUser from "./pages/Confirm_User.jsx";
-// import Home from "./pages/Home";
+import Home from "./pages/Home";
 import Navbar from "./components/Navbar";
 
 const Layout = () => {
@@ -32,10 +32,10 @@ const router = createBrowserRouter([
     path: "/",
     element: <Layout />,
     children: [
-      // {
-      //   path: "/",
-      //   element: <Home />,
-      // },
+      {
+        path: "/",
+        element: <Home />,
+      },
       {
         path: "/write",
         element: <Write />,

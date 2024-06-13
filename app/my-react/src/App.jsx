@@ -14,6 +14,7 @@ import Note from "./pages/Note.jsx";
 import Notes from "./pages/Notes.jsx";
 
 import Write from "./pages/Write.jsx";
+import ConfirmUser from "./pages/Confirm_User.jsx";
 // import Home from "./pages/Home";
 import Navbar from "./components/Navbar";
 
@@ -55,15 +56,19 @@ const router = createBrowserRouter([
         path: "/login",
         element: <Login />,
       },
-      {
-        path: "/mfa-setup",
-        element: <MfaSetup />,
-      },
-      {
-        path: "/mfa-verify",
-        element: <MfaVerify />,
-      },
     ],
+  },
+  {
+    path: "/mfa-setup",
+    element: <MfaSetup />,
+  },
+  {
+    path: "/mfa-verify",
+    element: <MfaVerify />,
+  },
+  {
+    path: "/confirm-user",
+    element: <ConfirmUser />,
   },
 ]);
 

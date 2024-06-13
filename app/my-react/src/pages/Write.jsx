@@ -3,7 +3,6 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
-import moment from "moment";
 
 const Write = () => {
   const state = useLocation().state;
@@ -56,7 +55,6 @@ const Write = () => {
               desc: value,
               cat,
               img: file ? imgUrl : "",
-              date: moment(Date.now()).format("YYYY-MM-DD HH:mm:ss"),
             },
             {
               withCredentials: true,

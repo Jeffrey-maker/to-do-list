@@ -262,11 +262,12 @@ def register():
         (User.username == username) | (User.email == email)
     ).first()
     if existing_user:
+        errors = []
         if existing_user.username == username:
-            flash("Username already exists!", "danger")
+            errors.append("Username already exists!")
         if existing_user.email == email:
-            flash("Email already exists!", "danger")
-        return redirect(url_for("main.register"))
+            errors.append("Email already exists!")
+        return jsonify({"errors": errors}), 400
 
     hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
     new_user = User(username=username, password=hashed_password, email=email)
@@ -304,7 +305,7 @@ def register():
     Check email code
     Use initiate_auth get Session and store in session
 """
-@main.route("/api/auth/confirm-user", methods=["GET", "POST"])
+@main.route("/confirm-user", methods=["POST"])
 @login_required
 def confirm_user():
     if "new_username" not in session or "new_email" not in session:

@@ -15,7 +15,7 @@ const Register = () => {
 
   const [passwordMatch, setPasswordMatch] = useState(true);
   const [passwordValid, setPasswordValid] = useState(true);
-  const [err, setError] = useState(null);
+  const [err, setError] = useState([]);
 
   const navigate = useNavigate();
 
@@ -44,17 +44,19 @@ const Register = () => {
       return;
     }
     try {
-      // await axios.post("http://localhost:8800/api/auth/register", inputs, {
-      //   withCredentials: true,
-      // });
-      navigate("/confirm-user", {
-        state: {
-          email: inputs.email,
-          resendConfirmationCodeUrl: "http://localhost:8800/api/auth/resend",
-        },
+      let result = await axios.post("http://localhost:8000/register", inputs, {
+        withCredentials: true,
       });
+      console.log(result)
+      // navigate("/confirm-user", {
+      //   state: {
+      //     email: inputs.email,
+      //     resendConfirmationCodeUrl: "http://localhost:8800/api/auth/resend",
+      //   },
+      // });
     } catch (err) {
-      setError(err.response.data);
+      console.log(err)
+      setError(err.response.data.errors);
     }
   };
 

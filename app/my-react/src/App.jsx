@@ -13,7 +13,7 @@ import MfaVerify from "./pages/MFA_Verify.jsx";
 import Note from "./pages/Note.jsx";
 import Notes from "./pages/Notes.jsx";
 
-import Write from "./pages/Write.jsx";
+// import Write from "./pages/Write.jsx";
 import ConfirmUser from "./pages/Confirm_User.jsx";
 import Home from "./pages/Home";
 import Navbar from "./components/Navbar";
@@ -36,10 +36,10 @@ const router = createBrowserRouter([
         path: "/",
         element: <Home />,
       },
-      {
-        path: "/write",
-        element: <Write />,
-      },
+      // {
+      //   path: "/write",
+      //   element: <Write />,
+      // },
       {
         path: "/notes",
         element: <Notes />,

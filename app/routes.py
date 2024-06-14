@@ -10,7 +10,9 @@ from flask import (
     request,
     jsonify,
     flash,
+    Flask,
 )
+from flask_cors import CORS
 from flask_login import login_user, login_required, logout_user, current_user
 import requests
 from werkzeug.utils import secure_filename
@@ -32,10 +34,10 @@ from .models import db, User, Note
 import os
 import logging
 
-main = Blueprint("main", __name__)
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
+main = Blueprint("main", __name__)
+logger = logging.getLogger(__name__)
 
 """
     Return hash code of password
@@ -243,70 +245,57 @@ def login():
     Sign up on cognito
     Return to verify email page
 """
-@main.route("/register", methods=["GET", "POST"])
+@main.route("/register", methods=["POST"])
 def register():
-    if request.method == "POST":
-        # Register new user
-        username = request.form["new_username"]
-        password = request.form["new_password"]
-        confirm_password = request.form["confirm_password"]
-        email = request.form["email"]
-        cognito = get_cognito_client()
-        password_pattern = re.compile(
-            r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+    logger.debug("Enter to register")
+    # Register new user
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON"}), 400
+    username = data.get("username")
+    password = data.get("password")
+    email = data.get("email")
+    cognito = get_cognito_client()
+
+
+    existing_user = User.query.filter(
+        (User.username == username) | (User.email == email)
+    ).first()
+    if existing_user:
+        if existing_user.username == username:
+            flash("Username already exists!", "danger")
+        if existing_user.email == email:
+            flash("Email already exists!", "danger")
+        return redirect(url_for("main.register"))
+
+    hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
+    new_user = User(username=username, password=hashed_password, email=email)
+    db.session.add(new_user)
+    db.session.commit()
+
+    try:
+        secret_hash = get_secret_hash(
+            username,
+            current_app.config["COGNITO_APP_CLIENT_ID"],
+            current_app.config["COGNITO_APP_CLIENT_SECRET"],
         )
-
-        if not re.match(password_pattern, password):
-            flash(
-                "Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character, including @, $, !, %, *, ?, &.",
-                "danger",
-            )
-            return redirect(url_for("main.register"))
-
-        if password != confirm_password:
-            flash("Passwords do not match!", "danger")
-            return redirect(url_for("main.register"))
-
-        existing_user = User.query.filter(
-            (User.username == username) | (User.email == email)
-        ).first()
-        if existing_user:
-            if existing_user.username == username:
-                flash("Username already exists!", "danger")
-            if existing_user.email == email:
-                flash("Email already exists!", "danger")
-            return redirect(url_for("main.register"))
-
-        hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
-        new_user = User(username=username, password=hashed_password, email=email)
-        db.session.add(new_user)
-        db.session.commit()
-
-        try:
-            secret_hash = get_secret_hash(
-                username,
-                current_app.config["COGNITO_APP_CLIENT_ID"],
-                current_app.config["COGNITO_APP_CLIENT_SECRET"],
-            )
-            response = cognito.sign_up(
-                ClientId=current_app.config["COGNITO_APP_CLIENT_ID"],
-                Username=username,
-                Password=password,
-                SecretHash=secret_hash,
-                UserAttributes=[{"Name": "email", "Value": email}],
-            )
-            session["new_username"] = username
-            session["new_email"] = email
-            session["new_password"] = password
-            session["secret_hash"] = secret_hash
-            user = User.query.filter_by(username=username).first()
-            login_user(user)
-            flash("Sign-up successful!", "success")
-            return redirect(url_for("main.confirm_user"))
-        except ClientError as e:
-            flash(f"Sign-up error: {e.response['Error']['Message']}", "danger")
-            return redirect(url_for("main.register"))
-    return render_template("register.html")
+        response = cognito.sign_up(
+            ClientId=current_app.config["COGNITO_APP_CLIENT_ID"],
+            Username=username,
+            Password=password,
+            SecretHash=secret_hash,
+            UserAttributes=[{"Name": "email", "Value": email}],
+        )
+        session["new_username"] = username
+        session["new_email"] = email
+        session["new_password"] = password
+        session["secret_hash"] = secret_hash
+        user = User.query.filter_by(username=username).first()
+        login_user(user)
+        return jsonify({"message": "Sign-up successful!"}), 200
+    except ClientError as e:
+        return jsonify({"error": f"Sign-up error: {str(e)}"}), 400
+    
 
 
 """
@@ -315,7 +304,7 @@ def register():
     Check email code
     Use initiate_auth get Session and store in session
 """
-@main.route("/confirm_user", methods=["GET", "POST"])
+@main.route("/api/auth/confirm-user", methods=["GET", "POST"])
 @login_required
 def confirm_user():
     if "new_username" not in session or "new_email" not in session:
@@ -328,7 +317,7 @@ def confirm_user():
     cognito = get_cognito_client()
 
     if request.method == "POST":
-        confirmation_code = request.form.get("confirmation_code")
+        confirmation_code = request.json.get("confirmation_code")
 
         try:
             response = cognito.confirm_sign_up(
@@ -358,10 +347,10 @@ def confirm_user():
             logger.debug(f"Response at confirm user: {auth_response}")
             session["Session"] = auth_response["Session"]
             flash("Email confirmed successfully!", "success")
-            return redirect(url_for("main.setup_mfa"))
+            return jsonify({"message": "Email confirmed successfully!"}), 200
         except ClientError as e:
-            flash(f"Confirmation error: {e.response['Error']['Message']}", "danger")
-            return redirect(url_for("main.confirm_user"))
+            flash(f"Confirmation error: {str(e)}", "danger")
+            return jsonify({"error": f"Confirmation error: {str(e)}"}), 400
 
     try:
         secret_hash = get_secret_hash(

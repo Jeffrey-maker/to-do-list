@@ -22,11 +22,12 @@ def create_app():
     cogauth.init_app(app)
 
     from .models import User
+
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
     
-    from .routes import main
-    app.register_blueprint(main)
+    from .routes import main as main_blueprint
+    app.register_blueprint(main_blueprint)
 
     return app

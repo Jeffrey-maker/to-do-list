@@ -23,9 +23,9 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // await axios.post("http://localhost:8800/api/auth/register", inputs, {
-      //   withCredentials: true,
-      // });
+      await axios.post("http://127.0.0.1:8000/register", inputs, {
+        withCredentials: true,
+      });
       navigate("/confirm-user", {
         state: {
           email: inputs.email,

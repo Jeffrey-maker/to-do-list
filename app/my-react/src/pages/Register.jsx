@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import TextField from "@mui/material/TextField";
@@ -10,22 +10,43 @@ const Register = () => {
     username: "",
     email: "",
     password: "",
+    repassword: "",
   });
 
+  const [passwordMatch, setPasswordMatch] = useState(true);
+  const [passwordValid, setPasswordValid] = useState(true);
   const [err, setError] = useState(null);
 
   const navigate = useNavigate();
 
+  const passwordRegex = new RegExp(
+    "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$"
+  );
+
+  useEffect(() => {
+    // console.log(inputs);
+    setPasswordValid(passwordRegex.test(inputs.password));
+    setPasswordMatch(inputs.password === inputs.repassword);
+  }, [inputs.password, inputs.repassword]);
+
   const handleChange = (e) => {
-    setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setInputs((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!passwordValid) {
+      alert("Password does not meet the requirements!");
+      return;
+    } else if (!passwordMatch) {
+      alert("Passwords do not match!");
+      return;
+    }
     try {
-      await axios.post("http://127.0.0.1:8000/register", inputs, {
-        withCredentials: true,
-      });
+      // await axios.post("http://localhost:8800/api/auth/register", inputs, {
+      //   withCredentials: true,
+      // });
       navigate("/confirm-user", {
         state: {
           email: inputs.email,
@@ -53,7 +74,7 @@ const Register = () => {
           fontSize: "50px",
           color: "black",
           marginBottom: "20px",
-          marginTop: "100px",
+          marginTop: "70px",
         }}
       >
         Register
@@ -62,10 +83,13 @@ const Register = () => {
         style={{
           display: "flex",
           flexDirection: "column",
-          padding: "50px",
+          paddingTop: "50px",
+          paddingLeft: "70px",
+          paddingRight: "70px",
+          paddingBottom: "50px",
           backgroundColor: "white",
-          width: "300px",
-          gap: "20px",
+          width: "400px",
+          gap: "18px",
         }}
       >
         <TextField
@@ -89,6 +113,25 @@ const Register = () => {
           name="password"
           onChange={handleChange}
         />
+        <TextField
+          label="re-password"
+          variant="outlined"
+          type="password"
+          name="repassword"
+          onChange={handleChange}
+        />
+
+        {!passwordValid && inputs.password !== "" && (
+          <p style={{ color: "red" }}>
+            Password does not meet the requirements!
+          </p>
+        )}
+        {!passwordMatch &&
+          passwordValid &&
+          inputs.repassword !== "" &&
+          inputs.password !== "" && (
+            <p style={{ color: "red" }}>Passwords do not match!</p>
+          )}
         <Button
           variant="contained"
           color="primary"

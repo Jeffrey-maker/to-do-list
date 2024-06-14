@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useContext } from "react";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/authContext";
 
 const Navbar = () => {
+  const { currentUser, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
   function handleClickLogin() {
@@ -17,6 +19,10 @@ const Navbar = () => {
     navigate("/register");
   }
 
+  function handleClickLogout() {
+    navigate("/");
+  }
+
   return (
     <AppBar position="static" sx={{ backgroundColor: "#AEB8E6" }}>
       <Toolbar sx={{ justifyContent: "space-between" }}>
@@ -24,27 +30,43 @@ const Navbar = () => {
           To Do List
         </Typography>
         <Box>
-          <Typography
-            variant="h6"
-            component="span"
-            sx={{ color: "white", marginRight: 2 }}
-          >
-            Hello, user
-          </Typography>
-          <Button
-            sx={{ color: "white" }}
-            color="inherit"
-            onClick={handleClickLogin}
-          >
-            Login
-          </Button>
-          <Button
-            sx={{ color: "white" }}
-            color="inherit"
-            onClick={handleClickRegister}
-          >
-            Register
-          </Button>
+          {currentUser ? (
+            <>
+              <Typography
+                variant="h6"
+                component="span"
+                sx={{ color: "white", marginRight: 2 }}
+              >
+                Hello, {currentUser?.username}
+              </Typography>
+
+              <Button
+                sx={{ color: "white" }}
+                color="inherit"
+                onClick={handleClickLogout}
+              >
+                Logout
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                sx={{ color: "white" }}
+                color="inherit"
+                onClick={handleClickLogin}
+              >
+                Login
+              </Button>
+
+              <Button
+                sx={{ color: "white" }}
+                color="inherit"
+                onClick={handleClickRegister}
+              >
+                Register
+              </Button>
+            </>
+          )}
         </Box>
       </Toolbar>
     </AppBar>

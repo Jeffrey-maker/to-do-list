@@ -30,6 +30,7 @@ const Login = () => {
       //   withCredentials: true,
       // });
       // await login(inputs);
+      login();
       navigate("/mfa-verify");
     } catch (err) {
       setError(err.response.data);
@@ -76,9 +77,9 @@ const Login = () => {
         }}
       >
         <TextField
+          type="text"
           label="Username"
           variant="outlined"
-          value={inputs.username}
           onChange={handleChange}
         />
         <TextField
@@ -86,7 +87,6 @@ const Login = () => {
           label="password"
           variant="outlined"
           name="password"
-          value={inputs.password}
           onChange={handleChange}
         />
         <Button variant="contained" color="primary" type="submit">

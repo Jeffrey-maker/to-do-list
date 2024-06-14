@@ -9,23 +9,23 @@ export const AuthContextProvider = ({ children }) => {
     JSON.parse(localStorage.getItem("user") || null)
   );
   const login = async (inputs) => {
-    const res = await axios.post(
-      "http://localhost:8800/api/auth/login",
-      inputs,
-      {
-        withCredentials: true,
-      }
-    );
-    setCurrentUser(res.data);
+    // const res = await axios.post(
+    //   "http://localhost:8800/api/auth/login",
+    //   inputs,
+    //   {
+    //     withCredentials: true,
+    //   }
+    // );
+    setCurrentUser("test");
   };
   const logout = async (inputs) => {
-    await axios.post(
-      "http://localhost:8800/api/auth/logout",
-      {},
-      {
-        withCredentials: true,
-      }
-    );
+    // await axios.post(
+    //   "http://localhost:8800/api/auth/logout",
+    //   {},
+    //   {
+    //     withCredentials: true,
+    //   }
+    // );
     setCurrentUser(null);
   };
 

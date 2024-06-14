@@ -1,14 +1,16 @@
 // src/MfaSetup.js
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { TextField, Button, Container, Typography, Box } from "@mui/material";
 import backgroundImage from "../images/background.jpg";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import axios from "axios";
 
 const MfaSetup = () => {
   const location = useLocation();
-  const { qrImage, secret } = location.state || {};
+  // const { qrImage, secret } = location.state || {};
+  const [secretCode, setSecretCode] = useState("");
+  const [base64QrImage, setBase64QrImage] = useState("");
   const [confirmationCode, setConfirmationCode] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -21,29 +23,47 @@ const MfaSetup = () => {
     alert("Successfully copied TOTP secret token!");
   };
 
+  useEffect(() => {
+    const verifyCode = async () => {
+      try {
+        const response = await axios.get("http://127.0.0.1:8000/mfa-setup", {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        });
+        setSecretCode(response.data.secret_code);
+        setBase64QrImage(response.data.base64_qr_image);
+        console.log(response.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    verifyCode();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    
     try {
-      // const response = await axios.post(
-      //   "http://localhost:8800/api/auth/verify-code",
-      //   {
-      //     email: email,
-      //     code: confirmationCode,
-      //   },
-      //   {
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //     },
-      //     withCredentials: true,
-      //   }
-      // );
+      const response = await axios.post(
+        "http://127.0.0.1:8000/mfa-setup",
+        {
+          code: confirmationCode,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
 
-      // if (response.data.success) {
-      //   navigate("/login");
-      // } else {
-      //   setError("Invalid confirmation code.");
-      // }
+      if (response.data.success) {
+        navigate("/login");
+      } else {
+        setError("Invalid confirmation code.");
+      }
       navigate("/login");
     } catch (err) {
       setError(err.response.data.message || "An error occurred.");
@@ -82,11 +102,15 @@ const MfaSetup = () => {
           <li>Once you have scanned the QR, enter the OTP code below.</li>
         </ul>
         <Box textAlign="center" my={2}>
-          <img
-            src={qrImage}
-            alt="Secret Token"
-            style={{ width: "200px", height: "200px" }}
-          />
+        {base64QrImage ? (
+            <img
+              src={base64QrImage}
+              alt="Secret Token"
+              style={{ width: "200px", height: "200px" }}
+            />
+          ) : (
+            <Typography>Loading QR Code...</Typography>
+          )}
         </Box>
         <Box textAlign="center" my={2}>
           <Typography
@@ -94,7 +118,7 @@ const MfaSetup = () => {
             id="secret"
             style={{ wordWrap: "break-word" }}
           >
-            {secret}
+            {secretCode}
           </Typography>
         </Box>
         <Box textAlign="center" my={2}>

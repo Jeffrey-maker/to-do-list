@@ -80,6 +80,7 @@ const Login = () => {
           type="text"
           label="Username"
           variant="outlined"
+          name="username"
           onChange={handleChange}
         />
         <TextField

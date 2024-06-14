@@ -145,7 +145,7 @@ def check_mfa_setup_status(cognito_client, access_token):
     If MFA pass, get id token, access token, refresh token
     If all pass, return to notes page
 """
-@main.route("/login", methods=["GET", "POST"])
+@main.route("/login", methods=["POST"])
 def login():
     if request.method == "POST":
         # Login existing user
@@ -317,41 +317,39 @@ def confirm_user():
 
     cognito = get_cognito_client()
 
-    if request.method == "POST":
-        confirmation_code = request.json.get("confirmation_code")
+    data = request.get_json()
+    confirmation_code = data.get('code')
 
-        try:
-            response = cognito.confirm_sign_up(
-                ClientId=current_app.config["COGNITO_APP_CLIENT_ID"],
-                Username=username,
-                ConfirmationCode=confirmation_code,
-                SecretHash=get_secret_hash(
+    try:
+        response = cognito.confirm_sign_up(
+            ClientId=current_app.config["COGNITO_APP_CLIENT_ID"],
+            Username=username,
+            ConfirmationCode=confirmation_code,
+            SecretHash=get_secret_hash(
+                username,
+                current_app.config["COGNITO_APP_CLIENT_ID"],
+                current_app.config["COGNITO_APP_CLIENT_SECRET"],
+            ),
+        )
+
+        auth_response = cognito.initiate_auth(
+            ClientId=current_app.config["COGNITO_APP_CLIENT_ID"],
+            AuthFlow="USER_PASSWORD_AUTH",
+            AuthParameters={
+                "USERNAME": username,
+                "PASSWORD": password,  # Use the same password provided during registration
+                "SECRET_HASH": get_secret_hash(
                     username,
                     current_app.config["COGNITO_APP_CLIENT_ID"],
                     current_app.config["COGNITO_APP_CLIENT_SECRET"],
-                ),
-            )
-
-            auth_response = cognito.initiate_auth(
-                ClientId=current_app.config["COGNITO_APP_CLIENT_ID"],
-                AuthFlow="USER_PASSWORD_AUTH",
-                AuthParameters={
-                    "USERNAME": username,
-                    "PASSWORD": password,  # Use the same password provided during registration
-                    "SECRET_HASH": get_secret_hash(
-                        username,
-                        current_app.config["COGNITO_APP_CLIENT_ID"],
-                        current_app.config["COGNITO_APP_CLIENT_SECRET"],
-                    ),  # Include the SECRET_HASH
-                },
-            )
-            logger.debug(f"Response at confirm user: {auth_response}")
-            session["Session"] = auth_response["Session"]
-            flash("Email confirmed successfully!", "success")
-            return jsonify({"message": "Email confirmed successfully!"}), 200
-        except ClientError as e:
-            flash(f"Confirmation error: {str(e)}", "danger")
-            return jsonify({"error": f"Confirmation error: {str(e)}"}), 400
+                ),  # Include the SECRET_HASH
+            },
+        )
+        logger.debug(f"Response at confirm user: {auth_response}")
+        session["Session"] = auth_response["Session"]
+        return jsonify({"message": "Email confirmed successfully!"}), 200
+    except ClientError as e:
+        return jsonify({"error": f"Confirmation error: {str(e)}"}), 400
 
     try:
         secret_hash = get_secret_hash(
@@ -371,10 +369,6 @@ def confirm_user():
             f"Error resending confirmation code: {e.response['Error']['Message']}",
             "danger",
         )
-
-    email = session["new_email"]
-    return render_template("confirm_user.html", email=email)
-
 
 """
     Resend code to email
@@ -423,75 +417,76 @@ def resend_confirmation_code():
     Using secret code get uri
     Using uri get QR code from Google Authenticator so that user can scan it and input code to get set up MFA
 """
-@main.route("/setup_mfa", methods=["GET", "POST"])
+@main.route("/mfa-setup", methods=["GET"])
+@login_required
+def get_mfa():
+    cognito_client = get_cognito_client()
+    response = cognito_client.associate_software_token(Session=session["Session"])
+    logger.debug(f"Response at setup_mfa: {response}")
+    secret_code = response["SecretCode"]
+    session["Session"] = response["Session"]
+    uri = pyotp.totp.TOTP(secret_code).provisioning_uri(
+        name=current_user.username, issuer_name="YourApp"
+    )
+    base64_qr_image = get_b64encoded_qr_image(uri)
+    session["Secret_code"] = secret_code
+    return jsonify({
+        "secret_code": secret_code,
+        "base64_qr_image": base64_qr_image
+    })
+
+
+@main.route("/mfa-setup", methods=["POST"])
 @login_required
 def setup_mfa():
-    if request.method == "GET":
-        cognito_client = get_cognito_client()
-        response = cognito_client.associate_software_token(Session=session["Session"])
-        logger.debug(f"Response at setup_mfa: {response}")
-        secret_code = response["SecretCode"]
-        session["Session"] = response["Session"]
-        uri = pyotp.totp.TOTP(secret_code).provisioning_uri(
-            name=current_user.username, issuer_name="YourApp"
+    otp = request.form.get("otp")
+    if "Session" not in session:
+        flash("Session is missing. Please log in again.", "danger")
+        return redirect(url_for("main.login"))
+
+    cognito_client = get_cognito_client()
+
+    try:
+        username = session["new_username"]
+        session_token = session["Session"]
+
+        logger.debug(f"Username from session: {username}")
+        logger.debug(f"Session token: {session_token}")
+        logger.debug(f"OTP code: {otp}")
+
+        secret_hash = get_secret_hash(
+            username,
+            current_app.config["COGNITO_APP_CLIENT_ID"],
+            current_app.config["COGNITO_APP_CLIENT_SECRET"],
         )
-        base64_qr_image = get_b64encoded_qr_image(uri)
-        session["Secret_code"] = secret_code
-        return render_template(
-            "setup_mfa.html", secret=secret_code, qr_image=base64_qr_image
+        logger.debug(f"Secret hash: {secret_hash}")
+
+        response = cognito_client.verify_software_token(
+            Session=session_token, UserCode=otp
         )
+        logger.debug(f"Response from Cognito: {response}")
 
-    elif request.method == "POST":
-        otp = request.form.get("otp")
-        if "Session" not in session:
-            flash("Session is missing. Please log in again.", "danger")
-            return redirect(url_for("main.login"))
+        return redirect(url_for("main.login"))
 
-        cognito_client = get_cognito_client()
-
-        try:
-            username = session["new_username"]
-            session_token = session["Session"]
-
-            logger.debug(f"Username from session: {username}")
-            logger.debug(f"Session token: {session_token}")
-            logger.debug(f"OTP code: {otp}")
-
-            secret_hash = get_secret_hash(
-                username,
-                current_app.config["COGNITO_APP_CLIENT_ID"],
-                current_app.config["COGNITO_APP_CLIENT_SECRET"],
-            )
-            logger.debug(f"Secret hash: {secret_hash}")
-
-            response = cognito_client.verify_software_token(
-                Session=session_token, UserCode=otp
-            )
-            logger.debug(f"Response from Cognito: {response}")
-
-            return redirect(url_for("main.login"))
-
-        except cognito_client.exceptions.NotAuthorizedException as e:
-            logger.error(f"Not authorized: {e}")
-            flash(f"Not authorized to verify the MFA code: {str(e)}", "danger")
-        except cognito_client.exceptions.CodeMismatchException as e:
-            logger.error(f"Code mismatch: {e}")
-            flash(f"Invalid MFA code: {str(e)}", "danger")
-        except cognito_client.exceptions.ExpiredCodeException as e:
-            logger.error(f"Expired code: {e}")
-            flash(f"The MFA code has expired: {str(e)}", "danger")
-        except KeyError as e:
-            logger.error(f"Key error: {e}")
-            flash(
-                f"Session or access token is missing: {str(e)}. Please log in again.",
-                "danger",
-            )
-            return redirect(url_for("main.login"))
-        except Exception as e:
-            logger.error(f"Unexpected error: {e}")
-            flash(f"An unexpected error occurred: {str(e)}", "danger")
-
-    return render_template("setup_mfa.html")
+    except cognito_client.exceptions.NotAuthorizedException as e:
+        logger.error(f"Not authorized: {e}")
+        flash(f"Not authorized to verify the MFA code: {str(e)}", "danger")
+    except cognito_client.exceptions.CodeMismatchException as e:
+        logger.error(f"Code mismatch: {e}")
+        flash(f"Invalid MFA code: {str(e)}", "danger")
+    except cognito_client.exceptions.ExpiredCodeException as e:
+        logger.error(f"Expired code: {e}")
+        flash(f"The MFA code has expired: {str(e)}", "danger")
+    except KeyError as e:
+        logger.error(f"Key error: {e}")
+        flash(
+            f"Session or access token is missing: {str(e)}. Please log in again.",
+            "danger",
+        )
+        return redirect(url_for("main.login"))
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        flash(f"An unexpected error occurred: {str(e)}", "danger")
 
 
 """

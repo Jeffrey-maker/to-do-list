@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios";
 import { Container, Box, Button, Typography, TextField } from "@mui/material";
 import backgroundImage from "../images/background.jpg";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -14,25 +15,25 @@ const ConfirmUser = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // const response = await axios.post(
-      //   "http://localhost:8800/api/auth/verify-code",
-      //   {
-      //     email: email,
-      //     code: confirmationCode,
-      //   },
-      //   {
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //     },
-      //     withCredentials: true,
-      //   }
-      // );
+      const response = await axios.post(
+        "http://127.0.0.1:8000/confirm-user",
+        {
+          email: email,
+          code: confirmationCode,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
 
-      // if (response.data.success) {
-      //   navigate("/mfa-setup");
-      // } else {
-      //   setError("Invalid confirmation code.");
-      // }
+      if (response.data.success) {
+        navigate("/mfa-setup");
+      } else {
+        setError("Invalid confirmation code.");
+      }
       navigate("/mfa-setup", {
         state: {
           qrImage: confirmationCode,
@@ -40,7 +41,8 @@ const ConfirmUser = () => {
         },
       });
     } catch (err) {
-      setError(err.response.data.message || "An error occurred.");
+      console.log(err)
+      setError(err.response?.data?.errors || "An error occurred.");
     }
   };
 

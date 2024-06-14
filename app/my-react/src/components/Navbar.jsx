@@ -20,6 +20,7 @@ const Navbar = () => {
   }
 
   function handleClickLogout() {
+    logout();
     navigate("/");
   }
 
@@ -37,7 +38,7 @@ const Navbar = () => {
                 component="span"
                 sx={{ color: "white", marginRight: 2 }}
               >
-                Hello, {currentUser?.username}
+                Hello, {currentUser}
               </Typography>
 
               <Button

@@ -43,15 +43,15 @@ function Notes() {
 
   useEffect(() => {
     const getNotes = async () => {
-      console.log("Get notes")
+      console.log("Get notes");
       try {
         const response = await axios.get("http://localhost:8000/notes", {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
         });
-        console.log("USEEFFECT",response.data);
-        setNotes(response.data.notes)
-        console.log(notes)
+        console.log("USEEFFECT", response.data);
+        setNotes(response.data.notes);
+        console.log(notes);
       } catch (err) {
         console.error(err);
       }
@@ -83,7 +83,15 @@ function Notes() {
       >
         <Typography variant="h4" component="h1" gutterBottom>
           My ToDos
+          <Button
+            variant="contained"
+            href="/write"
+            sx={{ marginLeft: "770px", width: "210px" }}
+          >
+            Create new todo
+          </Button>
         </Typography>
+
         <List>
           {notes.map((note) => (
             <ListItem
@@ -114,9 +122,6 @@ function Notes() {
             </ListItem>
           ))}
         </List>
-        <Button variant="contained" href="/write">
-          Create a new todo
-        </Button>
       </Container>
     </div>
   );

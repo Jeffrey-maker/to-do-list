@@ -25,14 +25,15 @@ const MfaSetup = () => {
 
   useEffect(() => {
     const verifyCode = async () => {
+      console.log("CAll useffect verifyCode")
       try {
-        const response = await axios.get("http://127.0.0.1:8000/mfa-setup", {
+        const response = await axios.get("http://localhost:8000/mfa-setup", {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
         });
         setSecretCode(response.data.secret_code);
         setBase64QrImage(response.data.base64_qr_image);
-        console.log(response.data);
+        console.log("USEEFFECT",response.data);
       } catch (err) {
         console.error(err);
       }
@@ -43,11 +44,9 @@ const MfaSetup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/mfa-setup",
+        "http://localhost:8000/mfa-setup",
         {
           code: confirmationCode,
         },

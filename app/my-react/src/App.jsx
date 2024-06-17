@@ -15,14 +15,25 @@ import Notes from "./pages/Notes.jsx";
 
 // import Write from "./pages/Write.jsx";
 import ConfirmUser from "./pages/Confirm_User.jsx";
-import Home from "./pages/Home";
-import Navbar from "./components/Navbar";
+import Home from "./pages/Home.jsx";
+import Navbar from "./components/Navbar.jsx";
+import Sidebar from "./components/Sidebar.jsx";
 
 const Layout = () => {
   return (
     <>
       <Navbar />
-      <Outlet />
+      <div
+        style={{
+          display: "flex",
+          height: "100vh",
+        }}
+      >
+        <Sidebar />
+        <div style={{ flex: 1 }}>
+          <Outlet />
+        </div>
+      </div>
     </>
   );
 };
@@ -48,14 +59,6 @@ const router = createBrowserRouter([
         path: "/note/:id",
         element: <Note />,
       },
-      {
-        path: "/register",
-        element: <Register />,
-      },
-      {
-        path: "/login",
-        element: <Login />,
-      },
     ],
   },
   {
@@ -69,6 +72,14 @@ const router = createBrowserRouter([
   {
     path: "/confirm-user",
     element: <ConfirmUser />,
+  },
+  {
+    path: "/register",
+    element: <Register />,
+  },
+  {
+    path: "/login",
+    element: <Login />,
   },
 ]);
 

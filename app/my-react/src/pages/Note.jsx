@@ -7,7 +7,7 @@ import postimg from "../images/post.jpg";
 import { IconButton } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import backgroundImage from "../images/background.jpg";
+import danse from "../images/danse.jpg";
 
 const Single = () => {
   const [post, setPost] = useState({});
@@ -64,7 +64,8 @@ const Single = () => {
         minHeight: "100vh",
         padding: "20px",
         height: "100vh",
-        backgroundImage: `url(${backgroundImage})`,
+        backgroundColor: "#F5F5F5",
+        background: `url(${danse}) no-repeat center center fixed`,
         backgroundSize: "cover",
       }}
     >

@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { Link, useNavigate } from "react-router-dom";
-import backgroundImage from "../images/background.jpg";
+import danse from "../images/danse.jpg";
 
 const todolists = [
   {
@@ -52,7 +52,8 @@ function Notes() {
     <div
       style={{
         height: "100vh",
-        backgroundImage: `url(${backgroundImage})`,
+        backgroundColor: "#F5F5F5",
+        background: `url(${danse}) no-repeat center center fixed`,
         backgroundSize: "cover",
       }}
     >
@@ -65,7 +66,7 @@ function Notes() {
         }}
       >
         <Typography variant="h4" component="h1" gutterBottom>
-          My Notes
+          My ToDos
         </Typography>
         <List>
           {notes.map((note) => (

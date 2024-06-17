@@ -58,6 +58,7 @@ const MfaSetup = () => {
           withCredentials: true,
         }
       );
+      console.log(response);
 
       if (response.data.success) {
         navigate("/login");

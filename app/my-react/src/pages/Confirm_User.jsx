@@ -16,7 +16,7 @@ const ConfirmUser = () => {
     e.preventDefault();
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/confirm-user",
+        "http://localhost:8000/confirm-user",
         {
           email: email,
           code: confirmationCode,
@@ -41,7 +41,7 @@ const ConfirmUser = () => {
         },
       });
     } catch (err) {
-      console.log(err)
+      console.log(err);
       setError(err.response?.data?.errors || "An error occurred.");
     }
   };

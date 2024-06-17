@@ -32,7 +32,7 @@ const MfaVerify = () => {
 
       console.log("Response received:", response);
 
-      if (response.data.success) {
+      if (response.data.message == "MFA verify successfully!") {
         navigate("/notes");
       } else {
         setError("Invalid confirmation code.");

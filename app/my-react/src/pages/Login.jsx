@@ -34,7 +34,7 @@ const Login = () => {
       login();
       if (response.data.message == "Need MFA setup") {
         navigate("/mfa-setup");
-      } 
+      }
       if (response.data.message == "Need MFA verify") {
         navigate("/mfa-verify");
       }
@@ -76,9 +76,12 @@ const Login = () => {
         style={{
           display: "flex",
           flexDirection: "column",
-          padding: "50px",
+          paddingTop: "50px",
+          paddingLeft: "70px",
+          paddingRight: "70px",
+          paddingBottom: "50px",
           backgroundColor: "white",
-          width: "300px",
+          width: "400px",
           gap: "20px",
         }}
       >
@@ -100,14 +103,14 @@ const Login = () => {
           Login
         </Button>
         {err && <p>{err}</p>}
-        {/* <span
+        <span
           style={{
             fontSize: "15px",
             textAlign: "center",
           }}
         >
           Don't you have an account? <Link to="/register">Register</Link>
-        </span> */}
+        </span>
       </form>
     </div>
   );

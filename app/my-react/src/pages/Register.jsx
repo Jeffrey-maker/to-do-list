@@ -76,7 +76,7 @@ const Register = () => {
           fontSize: "50px",
           color: "black",
           marginBottom: "20px",
-          marginTop: "70px",
+          marginTop: "60px",
         }}
       >
         Register
@@ -122,7 +122,6 @@ const Register = () => {
           type="password"
           name="repassword"
           onChange={handleChange}
-          helperText="Must be same with password."
         />
 
         {!passwordValid && inputs.password !== "" && (
@@ -144,16 +143,17 @@ const Register = () => {
         >
           Register
         </Button>
-        {err && <p>{err}</p>}
-        {/* <span
+
+        <span
           style={{
             fontSize: "15px",
             textAlign: "center",
           }}
         >
           Do you have an account? <Link to="/login">Login</Link>
-        </span> */}
+        </span>
       </form>
+      {err && <p>{err}</p>}
     </div>
   );
 };

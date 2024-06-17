@@ -4,7 +4,6 @@ from flask import (
     Blueprint,
     current_app,
     render_template,
-    redirect,
     session,
     url_for,
     request,
@@ -313,7 +312,7 @@ def register():
 def confirm_user():
     if "new_username" not in session or "new_email" not in session:
         flash("No username or email found in session. Please register first.", "danger")
-        return redirect(url_for("main.register"))
+        return jsonify({"error": "Username or password was not exist"}), 400
 
     username = session["new_username"]
     password = session["new_password"]
@@ -570,7 +569,7 @@ def get_b64encoded_qr_image(uri):
 def logout():
     session.pop("access_token", None)
     logout_user()
-    return redirect(url_for("main.login"))
+    return jsonify({"message": "Logout"}), 200
 
 
 """
@@ -619,7 +618,7 @@ def notes():
     db.session.add(note)
     db.session.commit()
     flash("Note added successfully!", "success")
-    return redirect(url_for("main.notes"))
+    return jsonify({"message": "Notes create successfully!"}), 200
 
 @main.route("/notes", methods=["GET"])
 @login_required
@@ -692,7 +691,7 @@ def delete(note_id):
     note = Note.query.get_or_404(note_id)
     if note.author != current_user:
         flash("You do not have permission to delete this note.", "danger")
-        return redirect(url_for("main.notes"))
+        return jsonify({"error": "Do not have permission to delete"}), 400
 
     if note.file_path:
         try:
@@ -701,12 +700,12 @@ def delete(note_id):
             current_app.logger.error(f"Error deleting file from S3: {e}")
             current_app.logger.error(traceback.format_exc())
             flash("An error occurred while deleting the file from S3.", "danger")
-            return redirect(url_for("main.notes"))
+            return jsonify({"error": "Cannot delete the file from S3"}), 400
 
     db.session.delete(note)
     db.session.commit()
     flash("Note deleted successfully!", "success")
-    return redirect(url_for("main.notes"))
+    return jsonify({"message": "Note delete successfully"}), 200
 
 
 """

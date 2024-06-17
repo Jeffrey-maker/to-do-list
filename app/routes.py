@@ -582,78 +582,79 @@ def logout():
 @main.route("/notes", methods=["POST"])
 @login_required
 def notes():
-    try:
-        if request.method == "POST":
-            title = request.form.get("title")
-            description = request.form.get("description")
-            file = request.files.get("file")
-            s3_object_key = None
-            presigned_post = None
+    
+    title = request.form.get("title")
+    description = request.form.get("description")
+    file = request.files.get("file")
+    s3_object_key = None
+    presigned_post = None
 
-            if file:
-                try:
-                    filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
-                    presigned_post = upload_file_to_s3(
-                        current_app.config["S3_BUCKET"], current_user.username, filename
-                    )
-                    current_app.logger.debug(f"Presigned Post: {presigned_post}")
-                    files = {"file": (file.filename, file.stream, file.content_type)}
-                    response = requests.post(
-                        presigned_post["url"],
-                        data=presigned_post["fields"],
-                        files=files,
-                    )
-                    if response.status_code == 204:
-                        s3_object_key = f"{current_user.username}/{filename}"
-                    else:
-                        raise Exception("File upload failed")
-                except Exception as e:
-                    current_app.logger.error(f"Error uploading file: {e}")
-                    current_app.logger.error(traceback.format_exc())
-
-            note = Note(
-                title=title,
-                description=description,
-                file_path=s3_object_key,
-                author=current_user,
+    if file:
+        try:
+            filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+            presigned_post = upload_file_to_s3(
+                current_app.config["S3_BUCKET"], current_user.username, filename
             )
-            db.session.add(note)
-            db.session.commit()
-            flash("Note added successfully!", "success")
-            return redirect(url_for("main.notes"))
+            current_app.logger.debug(f"Presigned Post: {presigned_post}")
+            files = {"file": (file.filename, file.stream, file.content_type)}
+            response = requests.post(
+                presigned_post["url"],
+                data=presigned_post["fields"],
+                files=files,
+            )
+            if response.status_code == 204:
+                s3_object_key = f"{current_user.username}/{filename}"
+            else:
+                raise Exception("File upload failed")
+        except Exception as e:
+            current_app.logger.error(f"Error uploading file: {e}")
+            current_app.logger.error(traceback.format_exc())
 
-        elif request.method == "GET":
-            user_notes = Note.query.filter_by(user_id=current_user.id).all()
-            notes_with_presigned_urls = []
-            for note in user_notes:
-                presigned_url = None
-                if note.file_path:
-                    try:
-                        presigned_url = create_presigned_url(
-                            current_app.config["S3_BUCKET"], note.file_path
-                        )
-                        logger.debug(f"Presigned URL: {presigned_url}")
-                    except Exception as e:
-                        current_app.logger.error(f"Error generating presigned URL: {e}")
-                        current_app.logger.error(traceback.format_exc())
-                notes_with_presigned_urls.append(
-                    {
-                        "id": note.id,
-                        "title": note.title,
-                        "description": note.description,
-                        "presigned_url": presigned_url,
-                    }
+    note = Note(
+        title=title,
+        description=description,
+        file_path=s3_object_key,
+        author=current_user,
+    )
+    db.session.add(note)
+    db.session.commit()
+    flash("Note added successfully!", "success")
+    return redirect(url_for("main.notes"))
+
+@main.route("/notes", methods=["GET"])
+@login_required
+def get_notes():
+    user_notes = Note.query.filter_by(user_id=current_user.id).all()
+    notes_with_presigned_urls = []
+    for note in user_notes:
+        presigned_url = None
+        if note.file_path:
+            try:
+                presigned_url = create_presigned_url(
+                    current_app.config["S3_BUCKET"], note.file_path
                 )
-            current_app.logger.debug("Notes retrieved successfully")
-            current_app.logger.debug(
-                f"Notes with presigned url:  {notes_with_presigned_urls}"
-            )
-            return render_template("notes.html", notes=notes_with_presigned_urls)
+                logger.debug(f"Presigned URL: {presigned_url}")
+            except Exception as e:
+                current_app.logger.error(f"Error generating presigned URL: {e}")
+                current_app.logger.error(traceback.format_exc())
+        notes_with_presigned_urls.append(
+            {
+                "id": note.id,
+                "title": note.title,
+                "description": note.description,
+                "presigned_url": presigned_url,
+            }
+        )
+    current_app.logger.debug("Notes retrieved successfully")
+    current_app.logger.debug(
+        f"Notes with presigned url:  {notes_with_presigned_urls}"
+    )
+    return jsonify({"notes": notes_with_presigned_urls})
 
-    except Exception as e:
-        print(f"Error: {e}")
-        print(traceback.format_exc())
-        return "An error occurred while processing your request.", 500
+    # except Exception as e:
+    #     print(f"Error: {e}")
+    #     print(traceback.format_exc())
+    #     return "An error occurred while processing your request.", 500
 
 
 """

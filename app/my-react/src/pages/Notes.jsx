@@ -12,36 +12,52 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import { Link, useNavigate } from "react-router-dom";
 import danse from "../images/danse.jpg";
+import axios from "axios";
 
-const todolists = [
-  {
-    id: 1,
-    title: "Learn React",
-    desc: "How to create and nest components? How to add markup and styles? How to display data? How to render conditions and lists? How to respond to events and update the screen?",
-  },
-  {
-    id: 2,
-    title: "Learn React",
-    desc: "How to create and nest components? How to add markup and styles? How to display data? How to render conditions and lists?",
-  },
-  {
-    id: 3,
-    title: "Learn React",
-    desc: "How to create and nest components? How to add markup and styles? How to display data? How to render conditions and lists?",
-  },
-  {
-    id: 4,
-    title: "Learn React",
-    desc: "How to create and nest components? How to add markup and styles? How to display data? How to render conditions and lists?",
-  },
-];
+// const todolists = [
+//   {
+//     id: 1,
+//     title: "Learn React",
+//     desc: "How to create and nest components? How to add markup and styles? How to display data? How to render conditions and lists? How to respond to events and update the screen?",
+//   },
+//   {
+//     id: 2,
+//     title: "Learn React",
+//     desc: "How to create and nest components? How to add markup and styles? How to display data? How to render conditions and lists?",
+//   },
+//   {
+//     id: 3,
+//     title: "Learn React",
+//     desc: "How to create and nest components? How to add markup and styles? How to display data? How to render conditions and lists?",
+//   },
+//   {
+//     id: 4,
+//     title: "Learn React",
+//     desc: "How to create and nest components? How to add markup and styles? How to display data? How to render conditions and lists?",
+//   },
+// ];
 
 function Notes() {
   const [notes, setNotes] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    setNotes(todolists);
+    const getNotes = async () => {
+      console.log("Get notes")
+      try {
+        const response = await axios.get("http://localhost:8000/notes", {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        });
+        console.log("USEEFFECT",response.data);
+        setNotes(response.data.notes)
+        console.log(notes)
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    getNotes();
   }, []);
 
   const handleNavigate = (noteId) => {
@@ -80,7 +96,7 @@ function Notes() {
             >
               <ListItemText
                 primary={note.title}
-                secondary={note.desc}
+                secondary={note.description}
                 primaryTypographyProps={{ variant: "h6" }}
               />
               <Box>
@@ -98,6 +114,9 @@ function Notes() {
             </ListItem>
           ))}
         </List>
+        <Button variant="contained" href="/write">
+          Create a new todo
+        </Button>
       </Container>
     </div>
   );

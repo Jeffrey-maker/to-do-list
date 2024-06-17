@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { Box, Button, Typography } from "@mui/material";
 import { AuthContext } from "../context/authContext.jsx";
-import backgroundImage from "../images/background.jpg";
+import danse from "../images/danse.jpg";
 
 const Home = () => {
   const { currentUser } = useContext(AuthContext);
@@ -14,9 +14,9 @@ const Home = () => {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        backgroundImage: `url(${backgroundImage})`,
+        backgroundColor: "#F5F5F5",
+        background: `url(${danse}) no-repeat center center fixed`,
         backgroundSize: "cover",
-        backgroundPosition: "center",
       }}
     >
       {currentUser ? (
@@ -24,7 +24,7 @@ const Home = () => {
           View my todolist
         </Button>
       ) : (
-        <Typography variant="h6" color="secondary">
+        <Typography variant="h4" color="secondary">
           Please Login
         </Typography>
       )}

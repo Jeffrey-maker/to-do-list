@@ -5,6 +5,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import backgroundImage from "../images/background.jpg";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import axios from "axios";
 
 const MfaVerify = () => {
   const navigate = useNavigate();
@@ -13,30 +14,35 @@ const MfaVerify = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    console.log("Submitting form...");
     try {
-      // const response = await axios.post(
-      //   "http://localhost:8800/api/auth/verify-code",
-      //   {
-      //     email: email,
-      //     code: confirmationCode,
-      //   },
-      //   {
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //     },
-      //     withCredentials: true,
-      //   }
-      // );
+      console.log("Into try");
+      const response = await axios.post(
+        "http://localhost:8000/mfa-verify",
+        {
+          code: confirmationCode,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
 
-      // if (response.data.success) {
-      //   navigate("/login");
-      // } else {
-      //   setError("Invalid confirmation code.");
-      // }
-      navigate("/notes");
+      console.log("Response received:", response);
+
+      if (response.data.success) {
+        navigate("/notes");
+      } else {
+        setError("Invalid confirmation code.");
+      }
     } catch (err) {
-      setError(err.response.data.message || "An error occurred.");
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError("An error occurred.");
+      }
     }
   };
 

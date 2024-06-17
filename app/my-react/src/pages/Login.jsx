@@ -26,14 +26,20 @@ const Login = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      // await axios.post("http://localhost:8800/api/auth/login", inputs, {
-      //   withCredentials: true,
-      // });
-      // await login(inputs);
+      const response = await axios.post("http://localhost:8000/login", inputs, {
+        withCredentials: true,
+      });
+      await login(inputs);
+      console.log("response is", response.data.message);
       login();
-      navigate("/mfa-verify");
+      if (response.data.message == "Need MFA setup") {
+        navigate("/mfa-setup");
+      } 
+      if (response.data.message == "Need MFA verify") {
+        navigate("/mfa-verify");
+      }
     } catch (err) {
-      setError(err.response.data);
+      navigate("/login");
     }
   };
 

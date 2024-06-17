@@ -3,7 +3,7 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
-import backgroundImage from "../images/background.jpg";
+import danse from "../images/danse.jpg";
 
 const Write = () => {
   const state = useLocation().state;
@@ -71,7 +71,7 @@ const Write = () => {
         flexDirection: "column",
         alignItems: "center",
         height: "100vh",
-        background: `url(${backgroundImage}) no-repeat center center fixed`,
+        background: `url(${danse}) no-repeat center center fixed`,
         backgroundSize: "cover",
       }}
     >
@@ -81,8 +81,6 @@ const Write = () => {
           display: "flex",
 
           padding: "40px",
-
-          backgroundColor: "white",
           width: "1200px",
           gap: "20px",
 

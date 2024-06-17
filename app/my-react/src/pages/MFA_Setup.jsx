@@ -44,6 +44,7 @@ const MfaSetup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
       const response = await axios.post(
         "http://localhost:8000/mfa-setup",
@@ -101,7 +102,7 @@ const MfaSetup = () => {
           <li>Once you have scanned the QR, enter the OTP code below.</li>
         </ul>
         <Box textAlign="center" my={2}>
-        {base64QrImage ? (
+          {base64QrImage ? (
             <img
               src={base64QrImage}
               alt="Secret Token"

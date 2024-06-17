@@ -47,7 +47,7 @@ const Register = () => {
       let result = await axios.post("http://localhost:8000/register", inputs, {
         withCredentials: true,
       });
-      console.log(result)
+      console.log(result);
       navigate("/confirm-user", {
         state: {
           email: inputs.email,
@@ -55,7 +55,7 @@ const Register = () => {
         },
       });
     } catch (err) {
-      console.log(err)
+      console.log(err);
       setError(err.response.data.errors);
     }
   };

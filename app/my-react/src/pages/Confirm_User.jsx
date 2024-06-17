@@ -41,7 +41,7 @@ const ConfirmUser = () => {
         },
       });
     } catch (err) {
-      console.log(err)
+      console.log(err);
       setError(err.response?.data?.errors || "An error occurred.");
     }
   };

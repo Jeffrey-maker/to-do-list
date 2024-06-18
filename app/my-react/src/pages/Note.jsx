@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/authContext.jsx";
-import postimg from "../images/post.jpg";
 import { IconButton } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -80,14 +79,17 @@ const Note = () => {
         padding: "20px",
         height: "100vh",
         backgroundColor: "#F5F5F5",
-        background: `url(${danse}) no-repeat center center fixed`,
+        background: `url(${danse})`,
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
         backgroundSize: "cover",
+        backgroundPosition: "center -200px",
       }}
     >
       <div style={{ maxWidth: "800px", width: "100%" }}>
         <h1>{note.title}</h1>
         <p>{note.description}</p>
-        <img src={postimg} alt="" style={{ width: "800px", height: "400px" }} />
+        {/* <img src alt="" style={{ width: "800px", height: "400px" }} /> */}
         <div>
           <IconButton edge="end" aria-label="delete" onClick={handleEdit}>
             <EditIcon />

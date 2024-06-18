@@ -87,9 +87,29 @@ const Note = () => {
       }}
     >
       <div style={{ maxWidth: "800px", width: "100%" }}>
-        <h1>{note.title}</h1>
-        <p>{note.description}</p>
-        <img src={note.presigned_url} alt="" style={{ width: "800px", height: "600px" }} />
+        <h1
+          style={{
+            wordWrap: "break-word",
+            wordBreak: "break-all",
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {note.title}
+        </h1>
+        <p
+          style={{
+            wordWrap: "break-word",
+            wordBreak: "break-all",
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {note.description}
+        </p>
+        <img
+          src={note.presigned_url}
+          alt=""
+          style={{ width: "800px", height: "600px" }}
+        />
         <div>
           <IconButton edge="end" aria-label="delete" onClick={handleEdit}>
             <EditIcon />

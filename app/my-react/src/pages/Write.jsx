@@ -13,6 +13,7 @@ const Write = () => {
   const [cat, setCat] = useState(state?.cat || "");
 
   const navigate = useNavigate();
+  const postId = location.pathname.split("/")[2];
 
   const upload = async () => {
     const formData = new FormData();
@@ -30,19 +31,20 @@ const Write = () => {
     try {
       state
         ? await axios.put(
-            `http://localhost:8800/api/posts/${state.id}`,
+            `http://localhost:8000/write`,
             {
               title,
               desc: value,
               cat,
               img: file ? imgUrl : "",
+              postId,
             },
             {
               withCredentials: true,
             }
           )
         : await axios.post(
-            `http://localhost:8800/api/posts/`,
+            `http://localhost:8000/write`,
             {
               title,
               desc: value,

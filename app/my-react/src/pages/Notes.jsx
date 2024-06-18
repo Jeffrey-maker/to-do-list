@@ -43,15 +43,15 @@ function Notes() {
 
   useEffect(() => {
     const getNotes = async () => {
-      console.log("Get notes");
+      // console.log("Get notes");
       try {
         const response = await axios.get("http://localhost:8000/notes", {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
         });
-        console.log("USEEFFECT", response.data);
+        // console.log("USEEFFECT", response.data);
         setNotes(response.data.notes);
-        console.log(notes);
+        // console.log(notes);
       } catch (err) {
         console.error(err);
       }
@@ -60,8 +60,9 @@ function Notes() {
     getNotes();
   }, []);
 
-  const handleNavigate = (noteId) => {
-    navigate(`/note/${noteId}`);
+  const handleNavigate = (note) => {
+    console.log(note);
+    navigate(`/note/${note.id}`);
   };
 
   return (
@@ -114,7 +115,7 @@ function Notes() {
                     width: "150px",
                   }}
                   variant="outlined"
-                  onClick={() => handleNavigate(note.id)}
+                  onClick={() => handleNavigate(note)}
                 >
                   Read More
                 </Button>

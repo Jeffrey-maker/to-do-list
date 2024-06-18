@@ -15,60 +15,50 @@ const drawerWidth = 240;
 
 const Sidebar = () => {
   return (
-    <div
-      style={{
-        borderRight: "10px solid #e8e9f1",
-        backgroundColor: "#F5F5F5",
-        position: "sticky",
+    <Drawer
+      sx={{
+        width: drawerWidth,
+        flexShrink: 0,
+        "& .MuiDrawer-paper": {
+          width: drawerWidth,
+          boxSizing: "border-box",
+          top: "60px", // 调整以匹配 Navbar 的高度
+          height: "calc(100% - 60px)", // 确保 Drawer 填满剩余高度
+          backgroundColor: "#F5F5F5",
+          borderRight: "10px solid #e8e9f1",
+          position: "fixed", // 确保 Drawer 固定
+        },
       }}
+      variant="permanent"
+      anchor="left"
     >
-      <div style={{ borderRadius: "30%", position: "sticky" }}>
-        <Drawer
-          sx={{
-            width: drawerWidth,
-            flexShrink: 0,
-            zIndex: 900,
-            "& .MuiDrawer-paper": {
-              width: drawerWidth,
-              boxSizing: "border-box",
-              boxShadow: "none",
-              top: "65px",
-              backgroundColor: "#F5F5F5",
-              borderColor: "#F5F5F5",
-            },
-          }}
-          variant="permanent"
-          anchor="left"
-        >
-          <List>
-            <ListItem button component={Link} to="/">
-              <ListItemIcon>
-                <HomeIcon />
-              </ListItemIcon>
-              <ListItemText primary="Home" />
-            </ListItem>
+      <List>
+        <ListItem button component={Link} to="/">
+          <ListItemIcon>
+            <HomeIcon />
+          </ListItemIcon>
+          <ListItemText primary="Home" />
+        </ListItem>
 
-            <ListItem button component={Link} to="/notes">
-              <ListItemIcon>
-                <NoteIcon />
-              </ListItemIcon>
-              <ListItemText primary="ToDoList" />
-            </ListItem>
-            <ListItem button component={Link} to="/notes">
-              <ListItemIcon>
-                <NotificationsNoneIcon />
-              </ListItemIcon>
-              <ListItemText primary="Inbox" />
-            </ListItem>
+        <ListItem button component={Link} to="/notes">
+          <ListItemIcon>
+            <NoteIcon />
+          </ListItemIcon>
+          <ListItemText primary="ToDoList" />
+        </ListItem>
+        <ListItem button component={Link} to="/notes">
+          <ListItemIcon>
+            <NotificationsNoneIcon />
+          </ListItemIcon>
+          <ListItemText primary="Inbox" />
+        </ListItem>
 
-            <img
-              src={flower}
-              style={{ width: "180px", position: "fixed", bottom: 0, left: 0 }}
-            ></img>
-          </List>
-        </Drawer>
-      </div>
-    </div>
+        <img
+          src={flower}
+          style={{ width: "180px", position: "fixed", bottom: 0, left: 0 }}
+        ></img>
+      </List>
+    </Drawer>
   );
 };
 

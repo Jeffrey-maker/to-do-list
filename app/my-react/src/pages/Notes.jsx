@@ -68,18 +68,18 @@ function Notes() {
   return (
     <div
       style={{
-        height: "100vh",
-        backgroundColor: "#F5F5F5",
-        background: `url(${danse}) no-repeat center center fixed`,
+        backgroundImage: `url(${danse})`,
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
         backgroundSize: "cover",
+        backgroundPosition: "center -200px",
+        minHeight: "100vh",
       }}
     >
       <Container
         sx={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          height: "calc(100vh - 250px)",
+          paddingTop: "20px",
+          paddingBottom: "20px",
         }}
       >
         <Typography variant="h4" component="h1" gutterBottom>

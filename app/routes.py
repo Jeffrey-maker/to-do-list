@@ -4,7 +4,6 @@ from flask import (
     Blueprint,
     current_app,
     render_template,
-    redirect,
     session,
     url_for,
     request,
@@ -179,7 +178,7 @@ def login():
         if not email_verified:
             flash("Email not confirmed. Please confirm your email.", "warning")
             logger.debug(f"Session with not verify email: {session}")
-            return jsonify({"error": "Email not confirmed"}), 400
+            return jsonify({"message": "Email not confirmed"}), 200
 
         response = cognito_client.initiate_auth(
             ClientId=current_app.config["COGNITO_APP_CLIENT_ID"],
@@ -308,15 +307,22 @@ def register():
     Check email code
     Use initiate_auth get Session and store in session
 """
+@main.route("/confirm-user", methods=["GET"])
+@login_required
+def confirm_user_get_email():
+    email = session['new_email']
+    return jsonify({"email" : email})
+
+
 @main.route("/confirm-user", methods=["POST"])
 @login_required
 def confirm_user():
     if "new_username" not in session or "new_email" not in session:
         flash("No username or email found in session. Please register first.", "danger")
-        return redirect(url_for("main.register"))
+        return jsonify({"error": "Username or password was not exist"}), 400
 
-    username = session["new_username"]
-    password = session["new_password"]
+    username = session["USERNAME"]
+    password = session["PASSWORD"]
 
     cognito = get_cognito_client()
 
@@ -361,7 +367,7 @@ def confirm_user():
 @main.route("/resend_confirmation_code", methods=["POST"])
 @login_required
 def resend_confirmation_code():
-    username = session.get("new_username")
+    username = session.get("USERNAME")
     if not username:
         logger.error("No username found in session.")
         return jsonify(
@@ -439,7 +445,7 @@ def setup_mfa():
     cognito_client = get_cognito_client()
 
     try:
-        username = session["new_username"]
+        username = session["USERNAME"]
         session_token = session["Session"]
 
         logger.debug(f"Username from session: {username}")
@@ -499,10 +505,10 @@ def verify_mfa():
             ChallengeName="SOFTWARE_TOKEN_MFA",
             Session=session["Session"],
             ChallengeResponses={
-                "USERNAME": session["new_username"],
+                "USERNAME": session["USERNAME"],
                 "SOFTWARE_TOKEN_MFA_CODE": otp,
                 "SECRET_HASH": get_secret_hash(
-                    session["new_username"],
+                    session["USERNAME"],
                     current_app.config["COGNITO_APP_CLIENT_ID"],
                     current_app.config["COGNITO_APP_CLIENT_SECRET"],
                 ),
@@ -570,7 +576,7 @@ def get_b64encoded_qr_image(uri):
 def logout():
     session.pop("access_token", None)
     logout_user()
-    return redirect(url_for("main.login"))
+    return jsonify({"message": "Logout"}), 200
 
 
 """
@@ -582,10 +588,10 @@ def logout():
 @main.route("/notes", methods=["POST"])
 @login_required
 def notes():
-    
-    title = request.form.get("title")
-    description = request.form.get("description")
-    file = request.files.get("file")
+    data = request.get_json()
+    title = data.get("title")
+    description = data.get("description")
+    file = data.get("file")
     s3_object_key = None
     presigned_post = None
 
@@ -619,7 +625,7 @@ def notes():
     db.session.add(note)
     db.session.commit()
     flash("Note added successfully!", "success")
-    return redirect(url_for("main.notes"))
+    return jsonify({"message": "Notes create successfully!"}), 200
 
 @main.route("/notes", methods=["GET"])
 @login_required
@@ -692,7 +698,7 @@ def delete(note_id):
     note = Note.query.get_or_404(note_id)
     if note.author != current_user:
         flash("You do not have permission to delete this note.", "danger")
-        return redirect(url_for("main.notes"))
+        return jsonify({"error": "Do not have permission to delete"}), 400
 
     if note.file_path:
         try:
@@ -701,12 +707,12 @@ def delete(note_id):
             current_app.logger.error(f"Error deleting file from S3: {e}")
             current_app.logger.error(traceback.format_exc())
             flash("An error occurred while deleting the file from S3.", "danger")
-            return redirect(url_for("main.notes"))
+            return jsonify({"error": "Cannot delete the file from S3"}), 400
 
     db.session.delete(note)
     db.session.commit()
     flash("Note deleted successfully!", "success")
-    return redirect(url_for("main.notes"))
+    return jsonify({"message": "Note delete successfully"}), 200
 
 
 """

@@ -80,7 +80,6 @@ const Note = () => {
         justifyContent: "center",
         minHeight: "100vh",
         padding: "20px",
-        height: "100vh",
         backgroundColor: "#F5F5F5",
         background: `url(${danse})`,
         backgroundRepeat: "no-repeat",
@@ -111,7 +110,7 @@ const Note = () => {
         <img
           src={note.presigned_url}
           alt=""
-          style={{ width: "750px", height: "500px" }}
+          style={{ width: "100%", height: "auto", maxWidth: "100%" }}
         />
         <div>
           <IconButton edge="end" aria-label="delete" onClick={handleEdit}>

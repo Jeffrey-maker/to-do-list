@@ -109,10 +109,8 @@ def upload_file_to_s3(bucket_name, username, filename, expiration=3600):
     try:
         response = s3.generate_presigned_post(
             Bucket=bucket_name,
-            Key=object_name,
-            
+            Key=object_name,            
             ExpiresIn=expiration,
-            
         )
         logger.debug(f"Response in upload is : {response}")
         return response

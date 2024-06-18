@@ -37,13 +37,16 @@ const Note = () => {
   }, []);
 
   const handleDelete = async () => {
-    try {
-      await axios.post(`http://localhost:8000/delete/${noteId}`, noteId, {
-        withCredentials: true,
-      });
-      navigate("/notes");
-    } catch (err) {
-      console.log(err);
+    const isConfirmed = window.confirm("Are you sure to delete it?");
+    if (isConfirmed) {
+      try {
+        await axios.post(`http://localhost:8000/delete/${noteId}`, noteId, {
+          withCredentials: true,
+        });
+        navigate("/notes");
+      } catch (err) {
+        console.log(err);
+      }
     }
   };
 
@@ -77,7 +80,6 @@ const Note = () => {
         justifyContent: "center",
         minHeight: "100vh",
         padding: "20px",
-        height: "100vh",
         backgroundColor: "#F5F5F5",
         background: `url(${danse})`,
         backgroundRepeat: "no-repeat",
@@ -87,9 +89,29 @@ const Note = () => {
       }}
     >
       <div style={{ maxWidth: "800px", width: "100%" }}>
-        <h1>{note.title}</h1>
-        <p>{note.description}</p>
-        <img src={note.presigned_url} alt="" style={{ width: "800px", height: "600px" }} />
+        <h1
+          style={{
+            wordWrap: "break-word",
+            wordBreak: "break-all",
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {note.title}
+        </h1>
+        <p
+          style={{
+            wordWrap: "break-word",
+            wordBreak: "break-all",
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {note.description}
+        </p>
+        <img
+          src={note.presigned_url}
+          alt=""
+          style={{ width: "100%", height: "auto", maxWidth: "100%" }}
+        />
         <div>
           <IconButton edge="end" aria-label="delete" onClick={handleEdit}>
             <EditIcon />

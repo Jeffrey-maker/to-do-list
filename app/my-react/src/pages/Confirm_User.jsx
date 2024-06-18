@@ -31,6 +31,7 @@ const ConfirmUser = () => {
 
       console.log(response.data);
       if (response.data.message == "Email confirmed successfully!") {
+        await login(inputs);
         navigate("/mfa-setup");
       } else {
         setError("Invalid confirmation code.");

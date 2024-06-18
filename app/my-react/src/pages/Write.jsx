@@ -23,8 +23,6 @@ const Write = () => {
   const navigate = useNavigate();
   const postId = location.pathname.split("/")[2];
 
-  console.log(state);
-
   const handleClick = async (e) => {
     e.preventDefault();
 
@@ -49,6 +47,7 @@ const Write = () => {
     try {
       console.log("title",title)
       console.log("desc",desc)
+      console.log("file", file)
       state
         ? await axios.put(`http://localhost:8000/notes`, formData, {
             withCredentials: true,

@@ -16,9 +16,13 @@ const drawerWidth = 240;
 const Sidebar = () => {
   return (
     <div
-      style={{ borderRight: "10px solid #e8e9f1", backgroundColor: "#F5F5F5" }}
+      style={{
+        borderRight: "10px solid #e8e9f1",
+        backgroundColor: "#F5F5F5",
+        position: "sticky",
+      }}
     >
-      <div style={{ borderRadius: "30%" }}>
+      <div style={{ borderRadius: "30%", position: "sticky" }}>
         <Drawer
           sx={{
             width: drawerWidth,

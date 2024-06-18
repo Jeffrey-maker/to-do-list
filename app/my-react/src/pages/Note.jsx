@@ -9,38 +9,39 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import danse from "../images/danse.jpg";
 
-const Single = () => {
-  const [post, setPost] = useState({});
+const Note = () => {
+  const [notes, setNotes] = useState([]);
+  const [note, setNote] = useState();
 
   const location = useLocation();
   const navigate = useNavigate();
 
-  const postId = location.pathname.split("/")[2];
-
-  const { currentUser } = useContext(AuthContext);
+  const noteId = location.pathname.split("/")[2];
 
   useEffect(() => {
-    const fetchData = async () => {
+    const getNotes = async () => {
+      // console.log("Get notes");
       try {
-        const res = await axios.get(
-          `http://localhost:8000/${postId}`,
-          {
-            withCredentials: true,
-          }
-        );
-        setPost(res.data);
+        const response = await axios.get("http://localhost:8000/notes", {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        });
+        // console.log("USEEFFECT", response.data);
+        setNotes(response.data.notes);
+        // console.log(notes);
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     };
-    fetchData();
-  }, [postId]);
+
+    getNotes();
+  }, []);
 
   const handleDelete = async () => {
     try {
-      // await axios.delete(`http://localhost:8800/api/posts/${postId}`, {
-      //   withCredentials: true,
-      // });
+      await axios.delete(`http://localhost:8000/delete`, noteId, {
+        withCredentials: true,
+      });
       navigate("/notes");
     } catch (err) {
       console.log(err);
@@ -48,13 +49,27 @@ const Single = () => {
   };
 
   const handleEdit = async () => {
-    navigate(`/write?edit=${postId}`, { state: { post } });
+    navigate(`/write?edit=${noteId}`, { state: { post: note } });
   };
 
   const getText = (html) => {
     const doc = new DOMParser().parseFromString(html, "text/html");
     return doc.body.textContent;
   };
+
+  useEffect(() => {
+    if (notes.length > 0) {
+      for (let i = 0; i < notes.length; i++) {
+        if (notes[i].id == noteId) {
+          setNote(notes[i]);
+        }
+      }
+    }
+  }, [notes]);
+
+  if (!note) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div
@@ -70,12 +85,8 @@ const Single = () => {
       }}
     >
       <div style={{ maxWidth: "800px", width: "100%" }}>
-        <h1>Learn React</h1>
-        <p>
-          How to create and nest components? How to add markup and styles? How
-          to display data? How to render conditions and lists? How to respond to
-          events and update the screen?
-        </p>
+        <h1>{note.title}</h1>
+        <p>{note.description}</p>
         <img src={postimg} alt="" style={{ width: "800px", height: "400px" }} />
         <div>
           <IconButton edge="end" aria-label="delete" onClick={handleEdit}>
@@ -90,4 +101,4 @@ const Single = () => {
   );
 };
 
-export default Single;
+export default Note;

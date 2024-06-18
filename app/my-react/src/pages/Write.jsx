@@ -7,53 +7,46 @@ import danse from "../images/danse.jpg";
 
 const Write = () => {
   const state = useLocation().state;
-  const [value, setValue] = useState(state?.title || "");
-  const [title, setTitle] = useState(state?.desc || "");
+  const [desc, setDesc] = useState(state?.post.description || "");
+  const [title, setTitle] = useState(state?.post.title || "");
   const [file, setFile] = useState(null);
-  const [cat, setCat] = useState(state?.cat || "");
+
+  const [inputs, setInputs] = useState({
+    postId: null,
+    title: "",
+    description: "",
+    file: null,
+  });
 
   const navigate = useNavigate();
+  const postId = location.pathname.split("/")[2];
 
-  const upload = async () => {
-    const formData = new FormData();
-    formData.append("file", file);
-    const res = await axios.post("http://localhost:8000/notes", formData, {
-      withCredentials: true,
-    });
-    return res.data;
-  };
+
+  console.log(state);
+
 
   const handleClick = async (e) => {
     e.preventDefault();
-    const imgUrl = await upload();
+    // const formData = new FormData();
+    // formData.append("file", file);
+    setInputs({
+      title: title,
+      description: desc,
+      file: file,
+      postId: postId,
+    });
 
     try {
       state
-        ? await axios.put(
-            `http://localhost:8000/${state.id}`,
-            {
-              title,
-              desc: value,
-              cat,
-              img: file ? imgUrl : "",
-            },
-            {
-              withCredentials: true,
-            }
-          )
-        : await axios.post(
-            `http://localhost:8000/`,
-            {
-              title,
-              desc: value,
-              cat,
-              img: file ? imgUrl : "",
-            },
-            {
-              withCredentials: true,
-            }
-          );
-      navigate("/");
+
+        ? await axios.put(`http://localhost:8000/write`, inputs, {
+            withCredentials: true,
+          })
+        : await axios.post(`http://localhost:8000/write`, inputs, {
+            withCredentials: true,
+          });
+      navigate("/notes");
+
     } catch (err) {
       console.log(err);
     }
@@ -119,8 +112,8 @@ const Write = () => {
             <ReactQuill
               className="editor"
               theme="snow"
-              value={value}
-              onChange={setValue}
+              value={desc}
+              onChange={setDesc}
               style={{ height: "100%", border: "none" }}
             />
           </div>

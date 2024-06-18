@@ -39,7 +39,7 @@ const Note = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`http://localhost:8000/delete`, noteId, {
+      await axios.post(`http://localhost:8000/delete/${noteId}`, noteId, {
         withCredentials: true,
       });
       navigate("/notes");

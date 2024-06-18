@@ -4,7 +4,6 @@ import axios from "axios";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import backgroundImage from "../images/background.jpg";
-import { AuthContext } from "../context/authContext.jsx";
 
 const Login = () => {
   const [inputs, setInputs] = useState({
@@ -16,8 +15,6 @@ const Login = () => {
   const [messages, setMessages] = useState([]);
 
   const navigate = useNavigate();
-
-  const { login } = useContext(AuthContext);
 
   const handleChange = (e) => {
     setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -52,9 +49,8 @@ const Login = () => {
       const response = await axios.post("http://localhost:8000/login", inputs, {
         withCredentials: true,
       });
-      await login(inputs);
       console.log("response is", response.data.message);
-      login();
+
       if (response.data.message == "Email not confirmed") {
         
         navigate("/confirm-user");
@@ -63,8 +59,8 @@ const Login = () => {
       if (response.data.message == "Need MFA setup") {
         navigate("/mfa-setup");
       }
-      if (response.data.message == "Need MFA verify") {
-        navigate("/mfa-verify");
+      if (response.data.message === "Need MFA verify") {
+        navigate("/mfa-verify", { state: inputs });
       }
     } catch (err) {
       navigate("/login");

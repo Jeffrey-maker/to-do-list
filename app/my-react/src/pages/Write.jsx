@@ -9,7 +9,7 @@ const Write = () => {
   const state = useLocation().state;
   const [desc, setDesc] = useState(state?.post.description || "");
   const [title, setTitle] = useState(state?.post.title || "");
-  const [file, setFile] = useState(null);
+  const [file, setFile] = useState(state?.presigned_url|| "");
 
   // const [inputs, setInputs] = useState({
   //   postId: null,
@@ -19,7 +19,8 @@ const Write = () => {
   // });
 
   const navigate = useNavigate();
-  const postId = location.pathname.split("/")[2];
+  const params = new URLSearchParams(location.search);
+  const postId = params.get("edit");
 
   const handleClick = async (e) => {
     e.preventDefault();
@@ -40,13 +41,13 @@ const Write = () => {
     if (file) {
       formData.append("file", file);
     }
+    if(postId) {
+      formData.append("PostId", postId)
+    }
 
     try {
-      console.log("title", title);
-      console.log("plainTextDesc", plainTextDesc);
-      console.log("file", file);
       state
-        ? await axios.put(`http://localhost:8000/notes`, formData, {
+        ? await axios.put(`http://localhost:8000/notes/${postId}`, formData, {
             withCredentials: true,
           })
         : await axios.post(`http://localhost:8000/notes`, formData, {

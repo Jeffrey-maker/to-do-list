@@ -109,7 +109,7 @@ def upload_file_to_s3(bucket_name, username, filename, expiration=3600):
     try:
         response = s3.generate_presigned_post(
             Bucket=bucket_name,
-            Key=object_name,
+            Key=object_name,            
             ExpiresIn=expiration,
         )
         logger.debug(f"Response in upload is : {response}")
@@ -593,6 +593,7 @@ def notes():
 
     logger.debug(f"Title upload: {title}")
     logger.debug(f"Description upload: {description}")
+    logger.debug(f"File name is: {file}")
 
     if file:
         try:
@@ -600,13 +601,15 @@ def notes():
             presigned_post = upload_file_to_s3(
                 current_app.config["S3_BUCKET"], current_user.username, filename
             )
-            current_app.logger.debug(f"Presigned Post: {presigned_post}")
+            logger.debug(f"Presigned post is: {presigned_post}")
             files = {"file": (file.filename, file.stream, file.content_type)}
+            logger.debug(f"Files name is in try: {files}")
             response = requests.post(
                 presigned_post["url"],
                 data=presigned_post["fields"],
                 files=files,
             )
+            logger.debug(f"Response in try is: {response}")
             if response.status_code == 204:
                 s3_object_key = f"{current_user.username}/{filename}"
             else:
@@ -625,6 +628,54 @@ def notes():
     db.session.commit()
     flash("Note added successfully!", "success")
     return jsonify({"message": "Notes create successfully!"}), 200
+
+
+@main.route("/notes/<int:post_id>", methods=["PUT"])
+@login_required
+def edit_note(post_id):
+    note = Note.query.get_or_404(post_id)
+
+    title = request.form.get("title")
+    description = request.form.get("description")
+    file = request.files.get("file")
+    s3_object_key = note.file_path
+
+    if file:
+        try:
+            if s3_object_key:
+                delete_file_from_s3(current_app.config["S3_BUCKET"], note.file_path)
+            filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+            presigned_post = upload_file_to_s3(
+                current_app.config["S3_BUCKET"], current_user.username, filename
+            )
+            logger.debug(f"Presigned post is: {presigned_post}")
+            files = {"file": (file.filename, file.stream, file.content_type)}
+            logger.debug(f"Files name is in try: {files}")
+            response = requests.post(
+                presigned_post["url"],
+                data=presigned_post["fields"],
+                files=files,
+            )
+            logger.debug(f"Response in try is: {response}")
+            if response.status_code == 204:
+                s3_object_key = f"{current_user.username}/{filename}"
+            else:
+                raise Exception("File upload failed")
+        except Exception as e:
+            current_app.logger.error(f"Error uploading file: {e}")
+            current_app.logger.error(traceback.format_exc())
+
+    # Update the existing note's attributes
+    note.title = title
+    note.description = description
+    note.file_path = s3_object_key
+    
+    # Commit the changes to the database
+    db.session.commit()
+    
+    flash("Note updated successfully!", "success")
+    return jsonify({"message": "Note updated successfully!"}), 200
+
 
 @main.route("/notes", methods=["GET"])
 @login_required

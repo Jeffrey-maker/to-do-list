@@ -24,7 +24,7 @@ const MfaSetup = () => {
   };
 
   useEffect(() => {
-    const verifyCode = async () => {
+    const getSecretCode = async () => {
       console.log("CAll useffect verifyCode")
       try {
         const response = await axios.get("http://localhost:8000/mfa-setup", {
@@ -39,7 +39,7 @@ const MfaSetup = () => {
       }
     };
 
-    verifyCode();
+    getSecretCode();
   }, []);
 
   const handleSubmit = async (e) => {

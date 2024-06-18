@@ -4,13 +4,33 @@ import { Container, Box, Button, Typography, TextField } from "@mui/material";
 import backgroundImage from "../images/background.jpg";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const ConfirmUser = () => {
   const [confirmationCode, setConfirmationCode] = useState("");
   const location = useLocation();
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { email, resendConfirmationCodeUrl } = location.state;
+  // const { email, resendConfirmationCodeUrl } = location.state;
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    const getEmail = async () => {
+      console.log("CAll useffect verifyCode")
+      try {
+        const response = await axios.get("http://localhost:8000/confirm-user", {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        });
+        console.log("USEEFFECT",response.data);
+        setEmail(response.data.email);
+        console.log("USEEFFECT",response.data.email);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    getEmail();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -47,15 +47,15 @@ const Register = () => {
       let result = await axios.post("http://localhost:8000/register", inputs, {
         withCredentials: true,
       });
-      console.log(result);
+      console.log(result)
       navigate("/confirm-user", {
-        state: {
-          email: inputs.email,
-          resendConfirmationCodeUrl: "http://localhost:8800/api/auth/resend",
-        },
+        // state: {
+        //   email: inputs.email,
+        //   resendConfirmationCodeUrl: "http://localhost:8800/api/auth/resend",
+        // },
       });
     } catch (err) {
-      console.log(err);
+      console.log(err)
       setError(err.response.data.errors);
     }
   };
@@ -76,7 +76,7 @@ const Register = () => {
           fontSize: "50px",
           color: "black",
           marginBottom: "20px",
-          marginTop: "60px",
+          marginTop: "70px",
         }}
       >
         Register
@@ -122,6 +122,7 @@ const Register = () => {
           type="password"
           name="repassword"
           onChange={handleChange}
+          helperText="Must be same with password."
         />
 
         {!passwordValid && inputs.password !== "" && (
@@ -143,17 +144,16 @@ const Register = () => {
         >
           Register
         </Button>
-
-        <span
+        {err && <p>{err}</p>}
+        {/* <span
           style={{
             fontSize: "15px",
             textAlign: "center",
           }}
         >
           Do you have an account? <Link to="/login">Login</Link>
-        </span>
+        </span> */}
       </form>
-      {err && <p>{err}</p>}
     </div>
   );
 };

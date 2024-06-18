@@ -29,17 +29,12 @@ const ConfirmUser = () => {
         }
       );
 
-      if (response.data.success) {
+      console.log(response.data);
+      if (response.data.message == "Email confirmed successfully!") {
         navigate("/mfa-setup");
       } else {
         setError("Invalid confirmation code.");
       }
-      navigate("/mfa-setup", {
-        state: {
-          qrImage: confirmationCode,
-          secret: confirmationCode,
-        },
-      });
     } catch (err) {
       console.log(err);
       setError(err.response?.data?.errors || "An error occurred.");

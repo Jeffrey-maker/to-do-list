@@ -39,7 +39,7 @@ const Note = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`http://localhost:8000/delete`, {
+      await axios.delete(`http://localhost:8000/delete`, noteId, {
         withCredentials: true,
       });
       navigate("/notes");
@@ -49,7 +49,7 @@ const Note = () => {
   };
 
   const handleEdit = async () => {
-    navigate(`/write?edit=${noteId}`, { state: { post: notes[noteId] } });
+    navigate(`/write?edit=${noteId}`, { state: { post: note } });
   };
 
   const getText = (html) => {

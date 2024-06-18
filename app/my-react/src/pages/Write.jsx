@@ -18,8 +18,6 @@ const Write = () => {
   //   file: null,
   // });
 
-  
-
   const navigate = useNavigate();
   const postId = location.pathname.split("/")[2];
 
@@ -35,7 +33,7 @@ const Write = () => {
     //   postId: postId,
     // });
 
-    const plainTextDesc = getText(desc)
+    const plainTextDesc = getText(desc);
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", plainTextDesc);
@@ -43,11 +41,10 @@ const Write = () => {
       formData.append("file", file);
     }
 
-
     try {
-      console.log("title",title)
-      console.log("desc",desc)
-      console.log("file", file)
+      console.log("title", title);
+      console.log("plainTextDesc", plainTextDesc);
+      console.log("file", file);
       state
         ? await axios.put(`http://localhost:8000/notes`, formData, {
             withCredentials: true,
@@ -86,14 +83,6 @@ const Write = () => {
           padding: "40px",
           width: "1200px",
           gap: "20px",
-
-          //   marginTop: "100px",
-          //   backgroundColor: "white",
-          //   display: "flex",
-          //   justifyContent: "center",
-          //   paddingLeft: "200px",
-          //   paddingRight: "200px",
-          //   gap: "50px",
         }}
       >
         <div
@@ -101,7 +90,6 @@ const Write = () => {
             flex: 5,
             display: "flex",
             flexDirection: "column",
-
             gap: "20px",
           }}
         >
@@ -117,6 +105,9 @@ const Write = () => {
               height: "300px",
               overflow: "scroll",
               border: "1px solid lightgray",
+              wordWrap: "break-word",
+              wordBreak: "break-all",
+              whiteSpace: "pre-wrap",
             }}
           >
             <ReactQuill

@@ -106,7 +106,21 @@ function Notes() {
               <ListItemText
                 primary={note.title}
                 secondary={note.description}
-                primaryTypographyProps={{ variant: "h6" }}
+                primaryTypographyProps={{
+                  variant: "h6",
+                  sx: {
+                    wordWrap: "break-word",
+                    wordBreak: "break-all",
+                    whiteSpace: "pre-wrap",
+                  },
+                }}
+                secondaryTypographyProps={{
+                  sx: {
+                    wordWrap: "break-word",
+                    wordBreak: "break-all",
+                    whiteSpace: "pre-wrap",
+                  },
+                }}
               />
               <Box>
                 <Button

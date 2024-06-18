@@ -110,10 +110,9 @@ def upload_file_to_s3(bucket_name, username, filename, expiration=3600):
         response = s3.generate_presigned_post(
             Bucket=bucket_name,
             Key=object_name,
+            
             ExpiresIn=expiration,
-            Conditions=[
-                ["content-length-range", 0, 1048576]  # Restrict file size to 1MB
-            ],
+            
         )
         logger.debug(f"Response in upload is : {response}")
         return response
@@ -585,7 +584,7 @@ def logout():
     Files are stored in the folder with username in S3
     Files are stored by presigned url. They are private, can only be seen, edited, and deleted by user
 """
-@main.route("/notes", methods=["POST"])
+@main.route("/notes", methods=["POST", "PUT"])
 @login_required
 def notes():
     title = request.form.get("title")
@@ -596,6 +595,7 @@ def notes():
 
     logger.debug(f"Title upload: {title}")
     logger.debug(f"Description upload: {description}")
+    logger.debug(f"File name is: {file}")
 
     if file:
         try:
@@ -603,13 +603,15 @@ def notes():
             presigned_post = upload_file_to_s3(
                 current_app.config["S3_BUCKET"], current_user.username, filename
             )
-            current_app.logger.debug(f"Presigned Post: {presigned_post}")
+            logger.debug(f"Presigned post is: {presigned_post}")
             files = {"file": (file.filename, file.stream, file.content_type)}
+            logger.debug(f"Files name is in try: {files}")
             response = requests.post(
                 presigned_post["url"],
                 data=presigned_post["fields"],
                 files=files,
             )
+            logger.debug(f"Response in try is: {response}")
             if response.status_code == 204:
                 s3_object_key = f"{current_user.username}/{filename}"
             else:
@@ -628,6 +630,7 @@ def notes():
     db.session.commit()
     flash("Note added successfully!", "success")
     return jsonify({"message": "Notes create successfully!"}), 200
+
 
 @main.route("/notes", methods=["GET"])
 @login_required

@@ -588,12 +588,14 @@ def logout():
 @main.route("/notes", methods=["POST"])
 @login_required
 def notes():
-    data = request.get_json()
-    title = data.get("title")
-    description = data.get("description")
-    file = data.get("file")
+    title = request.form.get("title")
+    description = request.form.get("description")
+    file = request.files.get("file")
     s3_object_key = None
     presigned_post = None
+
+    logger.debug(f"Title upload: {title}")
+    logger.debug(f"Description upload: {description}")
 
     if file:
         try:

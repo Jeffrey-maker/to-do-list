@@ -11,12 +11,14 @@ const Write = () => {
   const [title, setTitle] = useState(state?.post.title || "");
   const [file, setFile] = useState(null);
 
-  const [inputs, setInputs] = useState({
-    postId: null,
-    title: "",
-    description: "",
-    file: null,
-  });
+  // const [inputs, setInputs] = useState({
+  //   postId: null,
+  //   title: "",
+  //   description: "",
+  //   file: null,
+  // });
+
+  
 
   const navigate = useNavigate();
   const postId = location.pathname.split("/")[2];
@@ -25,24 +27,35 @@ const Write = () => {
 
   const handleClick = async (e) => {
     e.preventDefault();
-    const plainTextDesc = getText(desc);
+
     // const formData = new FormData();
     // formData.append("file", file);
-    setInputs({
-      title: title,
-      description: plainTextDesc,
-      file: file,
-      postId: postId,
-    });
+    // setInputs({
+    //   title: title,
+    //   description: plainTextDesc,
+    //   file: file,
+    //   postId: postId,
+    // });
+
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("description", plainTextDesc);
+    if (file) {
+      formData.append("file", file);
+    }
+
 
     try {
+      console.log("title",title)
+      console.log("desc",desc)
       state
-        ? await axios.put(`http://localhost:8000/write`, inputs, {
+        ? await axios.put(`http://localhost:8000/notes`, formData, {
             withCredentials: true,
           })
-        : await axios.post(`http://localhost:8000/write`, inputs, {
+        : await axios.post(`http://localhost:8000/notes`, formData, {
             withCredentials: true,
           });
+
       navigate("/notes");
     } catch (err) {
       console.log(err);

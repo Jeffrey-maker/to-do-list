@@ -26,11 +26,13 @@ const Layout = () => {
       <div
         style={{
           display: "flex",
-          height: "100vh",
+          height: "100%",
+          minHeight: "100vh",
+          marginTop: "80px",
         }}
       >
         <Sidebar />
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, overflow: "auto" }}>
           <Outlet />
         </div>
       </div>

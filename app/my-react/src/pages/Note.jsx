@@ -37,13 +37,16 @@ const Note = () => {
   }, []);
 
   const handleDelete = async () => {
-    try {
-      await axios.post(`http://localhost:8000/delete/${noteId}`, noteId, {
-        withCredentials: true,
-      });
-      navigate("/notes");
-    } catch (err) {
-      console.log(err);
+    const isConfirmed = window.confirm("Are you sure to delete it?");
+    if (isConfirmed) {
+      try {
+        await axios.post(`http://localhost:8000/delete/${noteId}`, noteId, {
+          withCredentials: true,
+        });
+        navigate("/notes");
+      } catch (err) {
+        console.log(err);
+      }
     }
   };
 
@@ -108,7 +111,7 @@ const Note = () => {
         <img
           src={note.presigned_url}
           alt=""
-          style={{ width: "800px", height: "600px" }}
+          style={{ width: "750px", height: "500px" }}
         />
         <div>
           <IconButton edge="end" aria-label="delete" onClick={handleEdit}>

@@ -111,9 +111,6 @@ def upload_file_to_s3(bucket_name, username, filename, expiration=3600):
             Bucket=bucket_name,
             Key=object_name,
             ExpiresIn=expiration,
-            Conditions=[
-                ["content-length-range", 0, 1048576]  # Restrict file size to 1MB
-            ],
         )
         logger.debug(f"Response in upload is : {response}")
         return response

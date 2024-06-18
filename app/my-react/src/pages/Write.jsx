@@ -37,6 +37,7 @@ const Write = () => {
     //   postId: postId,
     // });
 
+    const plainTextDesc = getText(desc)
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", plainTextDesc);

@@ -23,13 +23,11 @@ const Write = () => {
   const navigate = useNavigate();
   const postId = location.pathname.split("/")[2];
 
-
   console.log(state);
-
 
   const handleClick = async (e) => {
     e.preventDefault();
-    const plainTextDesc = getText(desc)
+
     // const formData = new FormData();
     // formData.append("file", file);
     // setInputs({
@@ -46,6 +44,7 @@ const Write = () => {
       formData.append("file", file);
     }
 
+
     try {
       console.log("title",title)
       console.log("desc",desc)
@@ -58,7 +57,6 @@ const Write = () => {
           });
 
       navigate("/notes");
-
     } catch (err) {
       console.log(err);
     }

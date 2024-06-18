@@ -3,14 +3,17 @@ import React from "react";
 import { TextField, Button, Container, Typography, Box } from "@mui/material";
 import "bootstrap/dist/css/bootstrap.min.css";
 import backgroundImage from "../images/background.jpg";
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useContext } from "react";
 import axios from "axios";
+import { AuthContext } from "../context/authContext.jsx";
 
 const MfaVerify = () => {
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [confirmationCode, setConfirmationCode] = useState("");
+  const { login } = useContext(AuthContext);
+  const state = useLocation().state;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,6 +36,7 @@ const MfaVerify = () => {
       console.log("Response received:", response);
 
       if (response.data.message == "MFA verify successfully!") {
+        await login(state.username);
         navigate("/notes");
       } else {
         setError("Invalid confirmation code.");

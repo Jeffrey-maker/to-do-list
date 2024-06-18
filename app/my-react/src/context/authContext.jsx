@@ -16,7 +16,7 @@ export const AuthContextProvider = ({ children }) => {
     //     withCredentials: true,
     //   }
     // );
-    setCurrentUser("test");
+    setCurrentUser(inputs);
   };
   const logout = async (inputs) => {
     // await axios.post(
@@ -31,6 +31,7 @@ export const AuthContextProvider = ({ children }) => {
 
   useEffect(() => {
     localStorage.setItem("user", JSON.stringify(currentUser));
+    console.log("Change user to:", currentUser);
   }, [currentUser]);
 
   return (

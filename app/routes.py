@@ -584,7 +584,7 @@ def logout():
     Files are stored in the folder with username in S3
     Files are stored by presigned url. They are private, can only be seen, edited, and deleted by user
 """
-@main.route("/notes", methods=["POST", "PUT"])
+@main.route("/notes", methods=["POST"])
 @login_required
 def notes():
     title = request.form.get("title")
@@ -630,6 +630,53 @@ def notes():
     db.session.commit()
     flash("Note added successfully!", "success")
     return jsonify({"message": "Notes create successfully!"}), 200
+
+
+@main.route("/notes/<int:post_id>", methods=["PUT"])
+@login_required
+def edit_note(post_id):
+    note = Note.query.get_or_404(post_id)
+
+    title = request.form.get("title")
+    description = request.form.get("description")
+    file = request.files.get("file")
+    s3_object_key = note.file_path
+
+    if file:
+        try:
+            if s3_object_key:
+                delete_file_from_s3(current_app.config["S3_BUCKET"], note.file_path)
+            filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+            presigned_post = upload_file_to_s3(
+                current_app.config["S3_BUCKET"], current_user.username, filename
+            )
+            logger.debug(f"Presigned post is: {presigned_post}")
+            files = {"file": (file.filename, file.stream, file.content_type)}
+            logger.debug(f"Files name is in try: {files}")
+            response = requests.post(
+                presigned_post["url"],
+                data=presigned_post["fields"],
+                files=files,
+            )
+            logger.debug(f"Response in try is: {response}")
+            if response.status_code == 204:
+                s3_object_key = f"{current_user.username}/{filename}"
+            else:
+                raise Exception("File upload failed")
+        except Exception as e:
+            current_app.logger.error(f"Error uploading file: {e}")
+            current_app.logger.error(traceback.format_exc())
+
+    # Update the existing note's attributes
+    note.title = title
+    note.description = description
+    note.file_path = s3_object_key
+    
+    # Commit the changes to the database
+    db.session.commit()
+    
+    flash("Note updated successfully!", "success")
+    return jsonify({"message": "Note updated successfully!"}), 200
 
 
 @main.route("/notes", methods=["GET"])

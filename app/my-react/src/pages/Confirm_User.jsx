@@ -32,6 +32,9 @@ const ConfirmUser = () => {
       console.log(response.data);
       if (response.data.message == "Email confirmed successfully!") {
         navigate("/mfa-setup");
+      }
+      if (response.data.message == "User already confirmed!") {
+        navigate("/reset-password");
       } else {
         setError("Invalid confirmation code.");
       }
@@ -41,10 +44,10 @@ const ConfirmUser = () => {
     }
   };
 
-  const resendCode = () => {
-    axios
-      .post(
-        resendConfirmationCodeUrl,
+  const resendCode = async () => {
+    try {
+      const response = await axios.post(
+        "http://localhost:8000/resend_confirmation_code",
         {},
         {
           headers: {
@@ -52,18 +55,16 @@ const ConfirmUser = () => {
           },
           withCredentials: true,
         }
-      )
-      .then((response) => {
-        if (response.status === 200 && response.data.success) {
-          alert("A new confirmation code has been sent to your email.");
-        } else {
-          alert("Error resending confirmation code.");
-        }
-      })
-      .catch((error) => {
-        console.error("There was a problem with the axios request:", error);
-        alert("An error occurred while resending the code.");
-      });
+      );
+      if (response.data.success) {
+        alert("A new confirmation code has been sent to your email.");
+      } else {
+        alert("Error resending confirmation code.");
+      }
+    } catch (error) {
+      console.error("There was a problem with the axios request:", error);
+      alert("An error occurred while resending the code.");
+    }
   };
 
   return (

@@ -75,6 +75,7 @@ def login():
             for attr in user_details["UserAttributes"]
         )
         if not email_verified:
+            session["username"] = username
             flash("Email not confirmed. Please confirm your email.", "warning")
             logger.debug(f"Session with not verify email: {session}")
             return jsonify({"message": "Email not confirmed", "email": email}), 200
@@ -127,13 +128,15 @@ def vertifyIdentity():
     data = request.get_json()
     if not data:
         return jsonify({"error": "Invalid JSON"}), 400
+    
     username = data.get("username")
     password = data.get("password")
     email = data.get("email")
-    cognito_client = get_cognito_client()
 
+    cognito_client = get_cognito_client()
     existing_user = User.query.filter((User.username == username)).first()
     existing_email = User.query.filter((User.email == email)).first()
+
     if not existing_user:
         errors = []
         errors.append("Username does not exist!")
@@ -149,24 +152,31 @@ def vertifyIdentity():
         errors.append("Username and email do not match")
         return jsonify({"errors": errors}), 400
 
-    create_user(username, password, email)
-
     try:
-        secret_hash = get_secret_hash(
-            username,
-            current_app.config["COGNITO_APP_CLIENT_ID"],
-            current_app.config["COGNITO_APP_CLIENT_SECRET"],
-        )
-        response = sign_up(cognito_client, username, password, email)
         session["username"] = username
-        session["email"] = email
-        session["password"] = password
-        session["secret_hash"] = secret_hash
-        user = User.query.filter_by(username=username).first()
-        login_user(user)
-        return jsonify({"message": "Sign-up successful!"}), 200
-    except ClientError as e:
-        return jsonify({"error": f"Sign-up error: {str(e)}"}), 400
+        user_details = cognito.admin_get_user(
+            UserPoolId=current_app.config["COGNITO_USERPOOL_ID"], 
+            Username=username
+        )
+
+        email_verified = any(
+            attr["Name"] == "email_verified" and attr["Value"] == "true"
+            for attr in user_details["UserAttributes"]
+        )
+        if not email_verified:
+            logger.debug(f"Email not verified for user {username}")
+            return jsonify({"message": "Email not confirmed"}), 200
+        return jsonify({"message": "Identity verified successfully!"}), 200
+
+    except cognito.exceptions.NotAuthorizedException:
+        logger.error("Not authorized: incorrect username or password")
+        return jsonify({"error": "Incorrect username or password"}), 400
+    except cognito.exceptions.UserNotFoundException:
+        logger.error("User not found")
+        return jsonify({"error": "User not found"}), 400
+    except Exception as e:
+        logger.error(f"An error occurred during verification: {str(e)}")
+        return jsonify({"error": "An error occurred during verification"}), 500
 
 
 # Register page
@@ -177,6 +187,7 @@ def vertifyIdentity():
 # Store username, hash code of password and email in postgreSQL
 # Sign up on cognito
 # Return to verify email page
+
 @main.route("/register", methods=["POST"])
 def register():
     # Request data
@@ -187,6 +198,8 @@ def register():
     password = data.get("password")
     email = data.get("email")
     cognito = get_cognito_client()
+
+    
     # Check whether username or password are already exist
     existing_user = User.query.filter(
         (User.username == username) | (User.email == email)
@@ -245,8 +258,17 @@ def confirm_user():
     data = request.get_json()
     confirmation_code = data.get("code")
     try:
+        user_details = cognito.admin_get_user(
+            UserPoolId=current_app.config["COGNITO_USERPOOL_ID"],
+            Username=username
+        )
+        user_status = any(
+            attr["Name"] == "email_verified" and attr["Value"] == "true"
+            for attr in user_details["UserAttributes"]
+        )
+        if user_status:
+            return jsonify({"message": "User already confirmed!"}), 200
         response = confirm_sign_up(cognito_client, username, confirmation_code)
-        logger.debug(f"response in confirm user is {response}")
         auth_response = initiate_auth(cognito_client, username, password)
         session["Session"] = auth_response["Session"]
         return jsonify({"message": "Email confirmed successfully!"}), 200
@@ -469,6 +491,45 @@ def edit_note(post_id):
     db.session.commit()
     return jsonify({"message": "Note updated successfully!"}), 200
 
+@main.route("/reset-password", methods=["PUT"])
+@login_required
+def resetPassword():
+    username = session.get("username")
+    if not username:
+        return jsonify({"error": "No username found in session"}), 400
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON"}), 400
+    password = data.get("password")
+    if not password:
+        return jsonify({"error": "Password is required"}), 400
+    
+    cognito = get_cognito_client()
+    
+    hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
+    try:
+        # 更新 Cognito 中的密码
+        response = cognito.admin_set_user_password(
+            UserPoolId=current_app.config["COGNITO_USERPOOL_ID"],
+            Username=username,
+            Password=password,
+            Permanent=True
+        )
+        logger.debug(f"Password updated in Cognito: {response}")
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        user.password = hashed_password
+
+        db.session.commit()
+
+        flash("Password reset successfully!", "success")
+        return jsonify({"message": "Password reset successfully!"}), 200
+    except Exception as e:
+        current_app.logger.error(f"Error resetting password: {e}")
+        return jsonify({"error": "An error occurred while resetting the password"}), 500
 
 # Get title and description of notes
 @main.route("/notes", methods=["GET"])

@@ -50,18 +50,16 @@ const Login = () => {
         withCredentials: true,
       });
       console.log("response is", response.data.message);
-      
-      if (response.data.message == "Email not confirmed") {
 
+      if (response.data.message == "Email not confirmed") {
         navigate("/confirm-user", {
           state: {
             email: response.data.email,
           },
         });
         console.log("email is", response.data.email);
-        await resendCode(); 
+        await resendCode();
         console.log("Finish resend code");
-
       }
       if (response.data.message == "Need MFA setup") {
         navigate("/mfa-setup");
@@ -150,7 +148,7 @@ const Login = () => {
             textAlign: "center",
           }}
         >
-          Forget password? <Link to="/vertifyidentity">Reset Password</Link>
+          Forget password? <Link to="/vertify-identity">Reset Password</Link>
         </span>
       </form>
     </div>

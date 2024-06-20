@@ -46,9 +46,33 @@ const Login = () => {
             email: inputs.email,
           },
         });
+        await resendCode();
       }
     } catch (err) {
       console.log("error is: ", err);
+    }
+  };
+
+  const resendCode = async () => {
+    try {
+      const response = await axios.post(
+        "http://localhost:8000/resend_confirmation_code",
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+      if (response.data.success) {
+        alert("A new confirmation code has been sent to your email.");
+      } else {
+        alert("Error resending confirmation code.");
+      }
+    } catch (error) {
+      console.error("There was a problem with the axios request:", error);
+      alert("An error occurred while resending the code.");
     }
   };
 

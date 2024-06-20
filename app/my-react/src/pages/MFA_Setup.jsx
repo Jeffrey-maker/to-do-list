@@ -105,7 +105,7 @@ const MfaSetup = () => {
         <Box textAlign="center" my={2}>
           {base64QrImage ? (
             <img
-              src={base64QrImage}
+            src={`data:image/png;base64,${base64QrImage}`}
               alt="Secret Token"
               style={{ width: "200px", height: "200px" }}
             />

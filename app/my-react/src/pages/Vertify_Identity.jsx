@@ -8,7 +8,7 @@ import backgroundImage from "../images/background.jpg";
 const Login = () => {
   const [inputs, setInputs] = useState({
     username: "",
-    password: "",
+    email: "",
   });
 
   const [err, setError] = useState(null);
@@ -20,57 +20,35 @@ const Login = () => {
     setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const resendCode = async () => {
-    try {
-      const response = await axios.post(
-        "http://localhost:8000/resend_confirmation_code",
-        {},
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        }
-      );
-      if (response.data.success) {
-        alert("A new confirmation code has been sent to your email.");
-      } else {
-        alert("Error resending confirmation code.");
-      }
-    } catch (error) {
-      console.error("There was a problem with the axios request:", error);
-      alert("An error occurred while resending the code.");
-    }
-  };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const response = await axios.post("http://localhost:8000/login", inputs, {
-        withCredentials: true,
-      });
+      const response = await axios.post(
+        "http://localhost:8000/vertify-identity",
+        inputs,
+        {
+          withCredentials: true,
+        }
+      );
       console.log("response is", response.data.message);
-      
-      if (response.data.message == "Email not confirmed") {
 
+      if (response.data.message == "Email does not exist") {
+        alert("Email does not exist");
+      }
+      if (response.data.message == "Username does not exist") {
+        alert("Username does not exist");
+      }
+      if (response.data.message == "Username and email do not match") {
+        alert("Username and email do not match");
+      } else {
         navigate("/confirm-user", {
           state: {
-            email: response.data.email,
+            email: inputs.email,
           },
         });
-        console.log("email is", response.data.email);
-        await resendCode(); 
-        console.log("Finish resend code");
-
-      }
-      if (response.data.message == "Need MFA setup") {
-        navigate("/mfa-setup");
-      }
-      if (response.data.message === "Need MFA verify") {
-        navigate("/mfa-verify", { state: inputs });
       }
     } catch (err) {
-      navigate("/login");
+      console.log("error is: ", err);
     }
   };
 
@@ -99,7 +77,7 @@ const Login = () => {
           marginTop: "130px",
         }}
       >
-        Login
+        Vertify Identity
       </h1>
 
       <form
@@ -124,14 +102,14 @@ const Login = () => {
           onChange={handleChange}
         />
         <TextField
-          type="password"
-          label="Password"
+          label="Email"
           variant="outlined"
-          name="password"
+          type="email"
+          name="email"
           onChange={handleChange}
         />
         <Button variant="contained" color="primary" type="submit">
-          Login
+          Vertify
         </Button>
         {err && <p>{err}</p>}
         <span
@@ -140,15 +118,7 @@ const Login = () => {
             textAlign: "center",
           }}
         >
-          Don't you have an account? <Link to="/register">Register</Link>
-        </span>
-        <span
-          style={{
-            fontSize: "15px",
-            textAlign: "center",
-          }}
-        >
-          Forget password? <Link to="/vertifyidentity">Reset Password</Link>
+          Remember password? <Link to="/login">Login</Link>
         </span>
       </form>
     </div>

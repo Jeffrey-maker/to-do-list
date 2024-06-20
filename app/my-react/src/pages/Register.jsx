@@ -47,15 +47,14 @@ const Register = () => {
       let result = await axios.post("http://localhost:8000/register", inputs, {
         withCredentials: true,
       });
-      console.log(result)
+      console.log(result);
       navigate("/confirm-user", {
         state: {
           email: inputs.email,
-          // resendConfirmationCodeUrl: "http://localhost:8000/resend",
         },
       });
     } catch (err) {
-      console.log(err)
+      console.log(err);
       setError(err.response.data.errors);
     }
   };
@@ -102,14 +101,14 @@ const Register = () => {
           onChange={handleChange}
         />
         <TextField
-          label="email"
+          label="Email"
           variant="outlined"
           type="email"
           name="email"
           onChange={handleChange}
         />
         <TextField
-          label="password"
+          label="Password"
           variant="outlined"
           type="password"
           name="password"
@@ -117,12 +116,11 @@ const Register = () => {
           helperText="Use at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character."
         />
         <TextField
-          label="re-password"
+          label="Re-Password"
           variant="outlined"
           type="password"
           name="repassword"
           onChange={handleChange}
-          helperText="Must be same with password."
         />
 
         {!passwordValid && inputs.password !== "" && (
@@ -145,14 +143,14 @@ const Register = () => {
           Register
         </Button>
         {err && <p>{err}</p>}
-        {/* <span
+        <span
           style={{
             fontSize: "15px",
             textAlign: "center",
           }}
         >
           Do you have an account? <Link to="/login">Login</Link>
-        </span> */}
+        </span>
       </form>
     </div>
   );

@@ -235,6 +235,68 @@ def login():
     return jsonify({"error": "Unexpected error occurred"}), 500
 
 
+
+@main.route("/vertify-identity", methods=["POST"])
+def vertifyIdentity():
+    logger.debug("Enter to vertify identity")
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON"}), 400
+    username = data.get("username")
+    email = data.get("email")
+    cognito = get_cognito_client()
+
+
+    existing_user = User.query.filter(
+        (User.username == username)
+    ).first()
+    existing_email = User.query.filter(
+        (User.email == email)
+    ).first()
+    if not existing_user:
+        errors = []
+        errors.append("Username does not exist!")
+        return jsonify({"errors": errors}), 400
+    
+    if not existing_email:
+        errors = []
+        errors.append("Email does not exist!")
+        return jsonify({"errors": errors}), 400
+    
+    if existing_user.id != existing_email.id:
+        errors = []
+        errors.append("Username and email do not match")
+        return jsonify({"errors": errors}), 400
+
+    hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
+    new_user = User(username=username, password=hashed_password, email=email)
+    db.session.add(new_user)
+    db.session.commit()
+
+    try:
+        secret_hash = get_secret_hash(
+            username,
+            current_app.config["COGNITO_APP_CLIENT_ID"],
+            current_app.config["COGNITO_APP_CLIENT_SECRET"],
+        )
+        response = cognito.sign_up(
+            ClientId=current_app.config["COGNITO_APP_CLIENT_ID"],
+            Username=username,
+            Password=password,
+            SecretHash=secret_hash,
+            UserAttributes=[{"Name": "email", "Value": email}],
+        )
+        session["new_username"] = username
+        session["new_email"] = email
+        session["new_password"] = password
+        session["secret_hash"] = secret_hash
+        user = User.query.filter_by(username=username).first()
+        login_user(user)
+        return jsonify({"message": "Sign-up successful!"}), 200
+    except ClientError as e:
+        return jsonify({"error": f"Sign-up error: {str(e)}"}), 400
+    
+    
 """
     Register page
     Check if the password follows regular expression, including at least one uppercase letter, one lowercase letter, one number, and one special character, including @, $, !, %, *, ?, &.
@@ -296,7 +358,6 @@ def register():
         return jsonify({"message": "Sign-up successful!"}), 200
     except ClientError as e:
         return jsonify({"error": f"Sign-up error: {str(e)}"}), 400
-    
 
 
 """

@@ -98,6 +98,7 @@ const Register = () => {
           variant="outlined"
           type="text"
           name="username"
+          required
           onChange={handleChange}
         />
         <TextField
@@ -105,6 +106,7 @@ const Register = () => {
           variant="outlined"
           type="email"
           name="email"
+          required
           onChange={handleChange}
         />
         <TextField
@@ -112,14 +114,16 @@ const Register = () => {
           variant="outlined"
           type="password"
           name="password"
+          required
           onChange={handleChange}
           helperText="Use at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character."
         />
         <TextField
-          label="Re-Password"
+          label="Confirm password"
           variant="outlined"
           type="password"
           name="repassword"
+          required
           onChange={handleChange}
         />
 

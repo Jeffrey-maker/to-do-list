@@ -49,10 +49,10 @@ const Register = () => {
       });
       console.log(result)
       navigate("/confirm-user", {
-        // state: {
-        //   email: inputs.email,
-        //   resendConfirmationCodeUrl: "http://localhost:8800/api/auth/resend",
-        // },
+        state: {
+          email: inputs.email,
+          // resendConfirmationCodeUrl: "http://localhost:8000/resend",
+        },
       });
     } catch (err) {
       console.log(err)

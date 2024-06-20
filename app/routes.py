@@ -171,11 +171,12 @@ def login():
             attr["Name"] == "email_verified" and attr["Value"] == "true"
             for attr in user_details["UserAttributes"]
         )
-
+        email = user.email if user else None
+        logger.debug(f"Email not verify and return email {email}")
         if not email_verified:
             flash("Email not confirmed. Please confirm your email.", "warning")
             logger.debug(f"Session with not verify email: {session}")
-            return jsonify({"message": "Email not confirmed"}), 200
+            return jsonify({"message": "Email not confirmed", "email":email}), 200
 
         response = cognito_client.initiate_auth(
             ClientId=current_app.config["COGNITO_APP_CLIENT_ID"],
@@ -194,7 +195,7 @@ def login():
 
         if "ChallengeName" in response:
             session["Session"] = response["Session"]
-            session["USERNAME"] = username
+            session["username"] = username
             if response["ChallengeName"] == "MFA_SETUP":
                 flash("MFA setup required. Please enter your MFA code.", "info")
                 return jsonify({"message": "Need MFA setup"}), 200
@@ -286,9 +287,9 @@ def register():
             SecretHash=secret_hash,
             UserAttributes=[{"Name": "email", "Value": email}],
         )
-        session["new_username"] = username
-        session["new_email"] = email
-        session["new_password"] = password
+        session["username"] = username
+        session["email"] = email
+        session["password"] = password
         session["secret_hash"] = secret_hash
         user = User.query.filter_by(username=username).first()
         login_user(user)
@@ -307,19 +308,19 @@ def register():
 @main.route("/confirm-user", methods=["GET"])
 @login_required
 def confirm_user_get_email():
-    email = session['new_email']
+    email = session['email']
     return jsonify({"email" : email})
 
 
 @main.route("/confirm-user", methods=["POST"])
 @login_required
 def confirm_user():
-    if "new_username" not in session or "new_email" not in session:
+    if "username" not in session or "email" not in session:
         flash("No username or email found in session. Please register first.", "danger")
         return jsonify({"error": "Username or password was not exist"}), 400
 
-    username = session["USERNAME"]
-    password = session["PASSWORD"]
+    username = session["username"]
+    password = session["password"]
 
     cognito = get_cognito_client()
 
@@ -364,7 +365,7 @@ def confirm_user():
 @main.route("/resend_confirmation_code", methods=["POST"])
 @login_required
 def resend_confirmation_code():
-    username = session.get("USERNAME")
+    username = session.get("username")
     if not username:
         logger.error("No username found in session.")
         return jsonify(
@@ -442,7 +443,7 @@ def setup_mfa():
     cognito_client = get_cognito_client()
 
     try:
-        username = session["USERNAME"]
+        username = session["username"]
         session_token = session["Session"]
 
         logger.debug(f"Username from session: {username}")
@@ -502,10 +503,10 @@ def verify_mfa():
             ChallengeName="SOFTWARE_TOKEN_MFA",
             Session=session["Session"],
             ChallengeResponses={
-                "USERNAME": session["USERNAME"],
+                "USERNAME": session["username"],
                 "SOFTWARE_TOKEN_MFA_CODE": otp,
                 "SECRET_HASH": get_secret_hash(
-                    session["USERNAME"],
+                    session["username"],
                     current_app.config["COGNITO_APP_CLIENT_ID"],
                     current_app.config["COGNITO_APP_CLIENT_SECRET"],
                 ),

@@ -50,11 +50,16 @@ const Login = () => {
         withCredentials: true,
       });
       console.log("response is", response.data.message);
-
+      
       if (response.data.message == "Email not confirmed") {
-        
-        navigate("/confirm-user");
+        navigate("/confirm-user", {
+          state: {
+            email: response.data.email,
+          },
+        });
+        console.log("email is", response.data.email);
         await resendCode(); 
+        console.log("Finish resend code");
       }
       if (response.data.message == "Need MFA setup") {
         navigate("/mfa-setup");

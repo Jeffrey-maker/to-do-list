@@ -32,42 +32,25 @@ const Login = () => {
     setInputs((prev) => ({ ...prev, [name]: value }));
   };
 
-  const resendCode = async () => {
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!passwordValid) {
+      alert("Password does not meet the requirements!");
+      return;
+    } else if (!passwordMatch) {
+      alert("Passwords do not match!");
+      return;
+    }
     try {
-      const response = await axios.post(
-        "http://localhost:8000/resend_confirmation_code",
-        {},
+      const response = await axios.put(
+        "http://localhost:8000/reset-password",
+        inputs,
         {
-          headers: {
-            "Content-Type": "application/json",
-          },
           withCredentials: true,
         }
       );
-      if (response.data.success) {
-        alert("A new confirmation code has been sent to your email.");
-      } else {
-        alert("Error resending confirmation code.");
-      }
-    } catch (error) {
-      console.error("There was a problem with the axios request:", error);
-      alert("An error occurred while resending the code.");
-    }
-  };
+      console.log("response is", response.data.message);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    try {
-      // const response = await axios.post("http://localhost:8000/login", inputs, {
-      //   withCredentials: true,
-      // });
-      // console.log("response is", response.data.message);
-
-      // if (response.data.message == "Need MFA setup") {
-      //   navigate("/mfa-setup");
-      // } else {
-      //   navigate("/login");
-      // }
       navigate("/login");
     } catch (err) {}
   };
@@ -129,6 +112,17 @@ const Login = () => {
           name="repassword"
           onChange={handleChange}
         />
+        {!passwordValid && inputs.password !== "" && (
+          <p style={{ color: "red" }}>
+            Password does not meet the requirements!
+          </p>
+        )}
+        {!passwordMatch &&
+          passwordValid &&
+          inputs.repassword !== "" &&
+          inputs.password !== "" && (
+            <p style={{ color: "red" }}>Passwords do not match!</p>
+          )}
         <Button variant="contained" color="primary" type="submit">
           Reset Password
         </Button>

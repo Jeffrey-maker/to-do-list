@@ -86,11 +86,11 @@ const router = createBrowserRouter([
     element: <Login />,
   },
   {
-    path: "/vertifyidentity",
+    path: "/vertify-identity",
     element: <VertifyIdentity />,
   },
   {
-    path: "/resetpassword",
+    path: "/reset-password",
     element: <ResetPassword />,
   },
 ]);

@@ -121,6 +121,7 @@ const Login = () => {
           label="Username"
           variant="outlined"
           name="username"
+          required
           onChange={handleChange}
         />
         <TextField
@@ -128,6 +129,7 @@ const Login = () => {
           label="Password"
           variant="outlined"
           name="password"
+          required
           onChange={handleChange}
         />
         <Button variant="contained" color="primary" type="submit">

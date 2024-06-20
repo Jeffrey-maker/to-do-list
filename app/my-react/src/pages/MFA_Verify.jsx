@@ -37,7 +37,7 @@ const MfaVerify = () => {
 
       if (response.data.message == "MFA verify successfully!") {
         await login(state.username);
-        navigate("/notes");
+        navigate("/");
       } else {
         setError("Invalid confirmation code.");
       }

@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import TextField from "@mui/material/TextField";
@@ -7,17 +7,29 @@ import backgroundImage from "../images/background.jpg";
 
 const Login = () => {
   const [inputs, setInputs] = useState({
-    username: "",
     password: "",
   });
 
   const [err, setError] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [passwordMatch, setPasswordMatch] = useState(true);
+  const [passwordValid, setPasswordValid] = useState(true);
 
   const navigate = useNavigate();
 
+  const passwordRegex = new RegExp(
+    "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$"
+  );
+
+  useEffect(() => {
+    // console.log(inputs);
+    setPasswordValid(passwordRegex.test(inputs.password));
+    setPasswordMatch(inputs.password === inputs.repassword);
+  }, [inputs.password, inputs.repassword]);
+
   const handleChange = (e) => {
-    setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setInputs((prev) => ({ ...prev, [name]: value }));
   };
 
   const resendCode = async () => {
@@ -46,24 +58,18 @@ const Login = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const response = await axios.post("http://localhost:8000/login", inputs, {
-        withCredentials: true,
-      });
-      console.log("response is", response.data.message);
+      // const response = await axios.post("http://localhost:8000/login", inputs, {
+      //   withCredentials: true,
+      // });
+      // console.log("response is", response.data.message);
 
-      if (response.data.message == "Email not confirmed") {
-        navigate("/confirm-user", { state: { email: null } });
-        await resendCode();
-      }
-      if (response.data.message == "Need MFA setup") {
-        navigate("/mfa-setup");
-      }
-      if (response.data.message === "Need MFA verify") {
-        navigate("/mfa-verify", { state: inputs });
-      }
-    } catch (err) {
+      // if (response.data.message == "Need MFA setup") {
+      //   navigate("/mfa-setup");
+      // } else {
+      //   navigate("/login");
+      // }
       navigate("/login");
-    }
+    } catch (err) {}
   };
 
   return (
@@ -91,7 +97,7 @@ const Login = () => {
           marginTop: "130px",
         }}
       >
-        Login
+        Reset Password
       </h1>
 
       <form
@@ -109,21 +115,22 @@ const Login = () => {
         }}
       >
         <TextField
-          type="text"
-          label="Username"
-          variant="outlined"
-          name="username"
-          onChange={handleChange}
-        />
-        <TextField
-          type="password"
           label="Password"
           variant="outlined"
+          type="password"
           name="password"
+          onChange={handleChange}
+          helperText="Use at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character."
+        />
+        <TextField
+          label="Re-Password"
+          variant="outlined"
+          type="password"
+          name="repassword"
           onChange={handleChange}
         />
         <Button variant="contained" color="primary" type="submit">
-          Login
+          Reset Password
         </Button>
         {err && <p>{err}</p>}
         <span
@@ -132,15 +139,7 @@ const Login = () => {
             textAlign: "center",
           }}
         >
-          Don't you have an account? <Link to="/register">Register</Link>
-        </span>
-        <span
-          style={{
-            fontSize: "15px",
-            textAlign: "center",
-          }}
-        >
-          Forget password? <Link to="/vertifyidentity">Reset Password</Link>
+          Remember password? <Link to="/login">Login</Link>
         </span>
       </form>
     </div>

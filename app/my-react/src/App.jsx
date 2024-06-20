@@ -18,6 +18,8 @@ import ConfirmUser from "./pages/Confirm_User.jsx";
 import Home from "./pages/Home.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Sidebar from "./components/Sidebar.jsx";
+import VertifyIdentity from "./pages/Vertify_Identity.jsx";
+import ResetPassword from "./pages/Reset_Password.jsx";
 
 const Layout = () => {
   return (
@@ -82,6 +84,14 @@ const router = createBrowserRouter([
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/vertifyidentity",
+    element: <VertifyIdentity />,
+  },
+  {
+    path: "/resetpassword",
+    element: <ResetPassword />,
   },
 ]);
 

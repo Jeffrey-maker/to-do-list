@@ -33,15 +33,16 @@ const Home = () => {
           marginTop: "20px",
         }}
       >
-        <Typography variant="h4" component="h1" gutterBottom>
-          Hello, {currentUser}! Welcome back to your To-Do List App.
-        </Typography>
-
-        <Typography variant="h6" component="h2" gutterBottom>
-          Overview:
-        </Typography>
         {currentUser ? (
           <>
+            <Typography variant="h4" component="h1" gutterBottom>
+              Hello, {currentUser}! Welcome back to your To-Do List App.
+            </Typography>
+
+            <Typography variant="h6" component="h2" gutterBottom>
+              Overview:
+            </Typography>
+
             <Box
               sx={{
                 display: "flex",

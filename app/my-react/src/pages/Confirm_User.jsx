@@ -10,7 +10,7 @@ const ConfirmUser = () => {
   const location = useLocation();
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { email, resendConfirmationCodeUrl } = location.state;
+  const { email } = location.state || {};
 
   const handleSubmit = async (e) => {
     e.preventDefault();

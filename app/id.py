@@ -61,12 +61,7 @@ def initiate_auth(cognito_client, username, password):
 
 
 # Sign up in cognito
-def sign_up(cognito_client, username, password, email):
-    secret_hash = get_secret_hash(
-            username,
-            current_app.config["COGNITO_APP_CLIENT_ID"],
-            current_app.config["COGNITO_APP_CLIENT_SECRET"],
-        )
+def sign_up(cognito_client, username, password, email, secret_hash):
     response = cognito_client.sign_up(
             ClientId=current_app.config["COGNITO_APP_CLIENT_ID"],
             Username=username,

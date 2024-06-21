@@ -11,6 +11,7 @@ from flask_login import login_user, login_required, logout_user, current_user
 import requests
 from werkzeug.utils import secure_filename
 from botocore.exceptions import ClientError
+from werkzeug.security import generate_password_hash
 import pyotp
 import uuid
 import logging
@@ -187,7 +188,6 @@ def vertifyIdentity():
 # Store username, hash code of password and email in postgreSQL
 # Sign up on cognito
 # Return to verify email page
-
 @main.route("/register", methods=["POST"])
 def register():
     # Request data
@@ -197,9 +197,8 @@ def register():
     username = data.get("username")
     password = data.get("password")
     email = data.get("email")
-    cognito = get_cognito_client()
+    cognito_client = get_cognito_client()
 
-    
     # Check whether username or password are already exist
     existing_user = User.query.filter(
         (User.username == username) | (User.email == email)
@@ -218,13 +217,7 @@ def register():
             current_app.config["COGNITO_APP_CLIENT_ID"],
             current_app.config["COGNITO_APP_CLIENT_SECRET"],
         )
-        response = cognito.sign_up(
-            ClientId=current_app.config["COGNITO_APP_CLIENT_ID"],
-            Username=username,
-            Password=password,
-            SecretHash=secret_hash,
-            UserAttributes=[{"Name": "email", "Value": email}],
-        )
+        response = sign_up(cognito_client, username, password, email, secret_hash)
         session["username"] = username
         session["email"] = email
         session["password"] = password

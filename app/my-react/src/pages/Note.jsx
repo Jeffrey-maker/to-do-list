@@ -110,7 +110,7 @@ const Note = () => {
         <img
           src={note.presigned_url}
           alt=""
-          style={{ width: "100%", height: "auto", maxWidth: "100%" }}
+          style={{ width: "60%", maxheight: "60%", maxWidth: "80%" }}
         />
         <div>
           <IconButton edge="end" aria-label="delete" onClick={handleEdit}>

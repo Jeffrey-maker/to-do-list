@@ -258,7 +258,7 @@ def confirm_user():
     data = request.get_json()
     confirmation_code = data.get("code")
     try:
-        user_details = cognito.admin_get_user(
+        user_details = cognito_client.admin_get_user(
             UserPoolId=current_app.config["COGNITO_USERPOOL_ID"],
             Username=username
         )

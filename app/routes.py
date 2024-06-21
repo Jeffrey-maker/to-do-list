@@ -154,7 +154,7 @@ def vertifyIdentity():
 
     try:
         session["username"] = username
-        user_details = cognito.admin_get_user(
+        user_details = cognito_client.admin_get_user(
             UserPoolId=current_app.config["COGNITO_USERPOOL_ID"], 
             Username=username
         )
@@ -168,10 +168,10 @@ def vertifyIdentity():
             return jsonify({"message": "Email not confirmed"}), 200
         return jsonify({"message": "Identity verified successfully!"}), 200
 
-    except cognito.exceptions.NotAuthorizedException:
+    except cognito_client.exceptions.NotAuthorizedException:
         logger.error("Not authorized: incorrect username or password")
         return jsonify({"error": "Incorrect username or password"}), 400
-    except cognito.exceptions.UserNotFoundException:
+    except cognito_client.exceptions.UserNotFoundException:
         logger.error("User not found")
         return jsonify({"error": "User not found"}), 400
     except Exception as e:
@@ -258,7 +258,7 @@ def confirm_user():
     data = request.get_json()
     confirmation_code = data.get("code")
     try:
-        user_details = cognito.admin_get_user(
+        user_details = cognito_client.admin_get_user(
             UserPoolId=current_app.config["COGNITO_USERPOOL_ID"],
             Username=username
         )

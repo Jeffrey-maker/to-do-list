@@ -44,7 +44,7 @@ const Register = () => {
       return;
     }
     try {
-      let result = await axios.post("${import.meta.env.VITE_BACKEND_URL}/register", inputs, {
+      let result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/register`, inputs, {
         withCredentials: true,
       });
       console.log(result);

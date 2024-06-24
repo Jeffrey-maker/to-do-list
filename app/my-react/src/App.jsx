@@ -5,7 +5,7 @@ import {
   Route,
   Outlet,
 } from "react-router-dom";
-import Register from "./pages/register.jsx";
+import Register from "./pages/Register.jsx";
 import Login from "./pages/Login.jsx";
 import MfaSetup from "./pages/MFA_Setup.jsx";
 import MfaVerify from "./pages/MFA_Verify.jsx";

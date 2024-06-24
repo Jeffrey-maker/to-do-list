@@ -150,3 +150,5 @@ migrations/
 app/my-react/node_modules/
 
 venv/
+
+todoList.pem

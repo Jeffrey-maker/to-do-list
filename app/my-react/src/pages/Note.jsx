@@ -21,7 +21,7 @@ const Note = () => {
     const getNotes = async () => {
       // console.log("Get notes");
       try {
-        const response = await axios.get("http://localhost:8000/notes", {
+        const response = await axios.get("http://3.133.94.246:8000/notes", {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
         });
@@ -40,7 +40,7 @@ const Note = () => {
     const isConfirmed = window.confirm("Are you sure to delete it?");
     if (isConfirmed) {
       try {
-        await axios.post(`http://localhost:8000/delete/${noteId}`, noteId, {
+        await axios.post(`http://3.133.94.246:8000/delete/${noteId}`, noteId, {
           withCredentials: true,
         });
         navigate("/notes");

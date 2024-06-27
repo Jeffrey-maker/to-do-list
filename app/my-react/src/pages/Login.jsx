@@ -11,7 +11,6 @@ const Login = () => {
     password: "",
   });
 
-  const [err, setError] = useState(null);
   const [messages, setMessages] = useState([]);
 
   const navigate = useNavigate();
@@ -23,7 +22,7 @@ const Login = () => {
   const resendCode = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:8000/resend_confirmation_code",
+        "http://3.133.94.246:8000/resend_confirmation_code",
         {},
         {
           headers: {
@@ -46,7 +45,7 @@ const Login = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const response = await axios.post("http://localhost:8000/login", inputs, {
+      const response = await axios.post("http://3.133.94.246:8000/login", inputs, {
         withCredentials: true,
       });
       console.log("response is", response.data.message);
@@ -68,6 +67,7 @@ const Login = () => {
         navigate("/mfa-verify", { state: inputs });
       }
     } catch (err) {
+      alert(err.response.data.error)
       navigate("/login");
     }
   };
@@ -133,7 +133,6 @@ const Login = () => {
         <Button variant="contained" color="primary" type="submit">
           Login
         </Button>
-        {err && <p>{err}</p>}
         <span
           style={{
             fontSize: "15px",

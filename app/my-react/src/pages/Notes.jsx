@@ -45,7 +45,7 @@ function Notes() {
     const getNotes = async () => {
       // console.log("Get notes");
       try {
-        const response = await axios.get("http://localhost:8000/notes", {
+        const response = await axios.get("http://3.133.94.246:8000/notes", {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
         });

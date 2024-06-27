@@ -21,7 +21,7 @@ const MfaVerify = () => {
     try {
       console.log("Into try");
       const response = await axios.post(
-        "http://localhost:8000/mfa-verify",
+        "http://3.133.94.246:8000/mfa-verify",
         {
           code: confirmationCode,
         },

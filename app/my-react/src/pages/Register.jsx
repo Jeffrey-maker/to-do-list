@@ -15,7 +15,6 @@ const Register = () => {
 
   const [passwordMatch, setPasswordMatch] = useState(true);
   const [passwordValid, setPasswordValid] = useState(true);
-  const [err, setError] = useState([]);
 
   const navigate = useNavigate();
 
@@ -44,10 +43,10 @@ const Register = () => {
       return;
     }
     try {
-      let result = await axios.post("http://3.133.114.56:8000/register", inputs, {
+      let result = await axios.post("http://3.133.94.246:8000/register", inputs, {
         withCredentials: true,
       });
-      console.log(result);
+      console.log("Result is ",result);
       navigate("/confirm-user", {
         state: {
           email: inputs.email,
@@ -55,7 +54,7 @@ const Register = () => {
       });
     } catch (err) {
       console.log(err);
-      setError(err.response.data.errors);
+      alert(err.response.data.errors);
     }
   };
 
@@ -146,7 +145,6 @@ const Register = () => {
         >
           Register
         </Button>
-        {err && <p>{err}</p>}
         <span
           style={{
             fontSize: "15px",

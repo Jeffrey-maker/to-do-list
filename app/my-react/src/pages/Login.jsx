@@ -46,12 +46,12 @@ const Login = () => {
     event.preventDefault();
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/login`, inputs, {
-        
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
+
       });
       console.log("response is", response.data.message);
 

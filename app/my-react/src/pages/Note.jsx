@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/authContext.jsx";
 import { IconButton } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete.js";
+import EditIcon from "@mui/icons-material/Edit.js";
 import danse from "../images/danse.jpg";
 
 const Note = () => {
@@ -21,7 +21,7 @@ const Note = () => {
     const getNotes = async () => {
       // console.log("Get notes");
       try {
-        const response = await axios.get("http://3.133.94.246:8000/notes", {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/notes`, {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
         });
@@ -40,7 +40,7 @@ const Note = () => {
     const isConfirmed = window.confirm("Are you sure to delete it?");
     if (isConfirmed) {
       try {
-        await axios.post(`http://3.133.94.246:8000/delete/${noteId}`, noteId, {
+        await axios.post(`${import.meta.env.VITE_API_URL}/delete/${noteId}`, noteId, {
           withCredentials: true,
         });
         navigate("/notes");

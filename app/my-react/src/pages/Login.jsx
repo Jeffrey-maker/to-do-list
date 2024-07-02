@@ -22,7 +22,7 @@ const Login = () => {
   const resendCode = async () => {
     try {
       const response = await axios.post(
-        "http://3.133.94.246:8000/resend_confirmation_code",
+        `${import.meta.env.VITE_API_URL}/resend_confirmation_code`,
         {},
         {
           headers: {
@@ -45,8 +45,13 @@ const Login = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const response = await axios.post("http://3.133.94.246:8000/login", inputs, {
-        withCredentials: true,
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/login`, inputs, {
+        
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        
       });
       console.log("response is", response.data.message);
 

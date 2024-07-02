@@ -12,7 +12,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  web:
+  backend:
     build: .
     ports:
       - "8000:5000"
@@ -25,5 +25,14 @@ services:
     depends_on:
       - db
 
+  # frontend:
+  #   build:
+  #     context: ./app/my-react
+  #     dockerfile: Dockerfile.frontend
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - backend
+      
 volumes:
   postgres_data:

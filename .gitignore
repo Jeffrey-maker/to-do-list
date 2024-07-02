@@ -152,3 +152,5 @@ app/my-react/node_modules/
 venv/
 
 todoList.pem
+
+certbot/conf/accounts/

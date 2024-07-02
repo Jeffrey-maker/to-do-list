@@ -48,7 +48,7 @@ const ResetPassword = () => {
     try {
       console.log(inputs)
       const response = await axios.post(
-        "http://3.133.94.246:8000/reset-password",
+        `${import.meta.env.VITE_API_URL}/reset-password`,
         inputs,
         {
           withCredentials: true,
@@ -65,7 +65,7 @@ const ResetPassword = () => {
   const resendCode = async () => {
     try {
       const response = await axios.post(
-        "http://3.133.94.246:8000/forgot-password",
+        `${import.meta.env.VITE_API_URL}/forgot-password`,
         {username: username},
         {
           headers: {

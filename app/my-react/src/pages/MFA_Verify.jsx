@@ -21,7 +21,7 @@ const MfaVerify = () => {
     try {
       console.log("Into try");
       const response = await axios.post(
-        "http://3.133.94.246:8000/mfa-verify",
+        `${import.meta.env.VITE_API_URL}/mfa-verify`,
         {
           code: confirmationCode,
         },

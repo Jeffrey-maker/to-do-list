@@ -17,7 +17,7 @@ const ConfirmUser = () => {
     e.preventDefault();
       try {
         const response = await axios.post(
-          "http://3.133.94.246:8000/confirm-user",
+          `${import.meta.env.VITE_API_URL}/confirm-user`,
           {
             email: email,
             code: confirmationCode,
@@ -47,7 +47,7 @@ const ConfirmUser = () => {
   const resendCode = async () => {
     try {
       const response = await axios.post(
-        "http://3.133.94.246:8000/resend_confirmation_code",
+        `${import.meta.env.VITE_API_URL}/resend_confirmation_code`,
         {},
         {
           headers: {

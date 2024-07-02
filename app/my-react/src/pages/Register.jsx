@@ -43,7 +43,7 @@ const Register = () => {
       return;
     }
     try {
-      let result = await axios.post("http://3.133.94.246:8000/register", inputs, {
+      let result = await axios.post(`${import.meta.env.VITE_API_URL}/register`, inputs, {
         withCredentials: true,
       });
       console.log("Result is ",result);

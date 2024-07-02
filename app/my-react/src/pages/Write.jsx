@@ -47,10 +47,10 @@ const Write = () => {
 
     try {
       state
-        ? await axios.put(`http://3.133.94.246:8000/notes/${postId}`, formData, {
+        ? await axios.put(`${import.meta.env.VITE_API_URL}/notes/${postId}`, formData, {
             withCredentials: true,
           })
-        : await axios.post(`http://3.133.94.246:8000/notes`, formData, {
+        : await axios.post(`${import.meta.env.VITE_API_URL}/notes`, formData, {
             withCredentials: true,
           });
 

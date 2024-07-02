@@ -34,9 +34,11 @@ from .db import (
     create_user,
     create_note,
 )
+from flask_cors import CORS, cross_origin
 
 logging.basicConfig(level=logging.DEBUG)
 main = Blueprint("main", __name__)
+
 logger = logging.getLogger(__name__)
 
 
@@ -104,9 +106,9 @@ def login():
                 return jsonify({"message": "Need MFA setup"}), 200
 
             # Store id token, access token and refresh token in session
-            session["id_token"] = id_token
-            session["access_token"] = access_token
-            session["refresh_token"] = refresh_token
+            # session["id_token"] = id_token
+            # session["access_token"] = access_token
+            # session["refresh_token"] = refresh_token
 
             user = User.query.filter_by(username=username).first()
             if not user:
@@ -249,45 +251,7 @@ def forgot_password():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-# @main.route("/reset-password", methods=["PUT"])
-# @login_required
-# def resetPassword():
-#     username = session.get("username")
-#     if not username:
-#         return jsonify({"error": "No username found in session"}), 400
 
-#     data = request.get_json()
-#     if not data:
-#         return jsonify({"error": "Invalid JSON"}), 400
-#     password = data.get("password")
-#     if not password:
-#         return jsonify({"error": "Password is required"}), 400
-    
-#     cognito = get_cognito_client()
-    
-#     hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
-#     try:
-#         # 更新 Cognito 中的密码
-#         response = cognito.admin_set_user_password(
-#             UserPoolId=current_app.config["COGNITO_USERPOOL_ID"],
-#             Username=username,
-#             Password=password,
-#             Permanent=True
-#         )
-#         logger.debug(f"Password updated in Cognito: {response}")
-#         user = User.query.filter_by(username=username).first()
-#         if not user:
-#             return jsonify({"error": "User not found"}), 404
-
-#         user.password = hashed_password
-
-#         db.session.commit()
-
-#         flash("Password reset successfully!", "success")
-#         return jsonify({"message": "Password reset successfully!"}), 200
-#     except Exception as e:
-#         current_app.logger.error(f"Error resetting password: {e}")
-#         return jsonify({"error": "An error occurred while resetting the password"}), 500
 
 # Register page
 # Check if the password follows regular expression, including at least one uppercase letter, one lowercase letter, one number, and one special character, including @, $, !, %, *, ?, &.
@@ -465,6 +429,7 @@ def setup_mfa():
 
 # Check code from Google Authenticator
 @main.route("/mfa-verify", methods=["POST"])
+@cross_origin()
 @login_required
 def verify_mfa():
     data = request.get_json()
@@ -477,14 +442,18 @@ def verify_mfa():
             username=session["username"],
             otp=otp,
         )
+        logger.debug("Response in verify is: ", response)
         if "AuthenticationResult" in response:
             id_token = response["AuthenticationResult"]["IdToken"]
             access_token = response["AuthenticationResult"]["AccessToken"]
             refresh_token = response["AuthenticationResult"]["RefreshToken"]
-            session["id_token"] = id_token
-            session["access_token"] = access_token
-            session["refresh_token"] = refresh_token
-            return jsonify({"message": "MFA verify successfully!"}), 200
+            # session["id_token"] = id_token
+            # session["access_token"] = access_token
+            # session["refresh_token"] = refresh_token
+            response = jsonify({"message": "MFA verify successfully!"})
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
+            # return jsonify({"message": "MFA verify successfully!"}), 200
         else:
             flash("Invalid MFA code. Please try again.", "danger")
     except cognito_client.exceptions.NotAuthorizedException as e:

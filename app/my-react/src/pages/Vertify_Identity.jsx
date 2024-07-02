@@ -24,7 +24,7 @@ const VertifyIdentity = () => {
     event.preventDefault();
     try {
       const response = await axios.post(
-        "http://3.133.94.246:8000/vertify-identity",
+        `${import.meta.env.VITE_API_URL}/vertify-identity`,
         inputs,
         {
           withCredentials: true,
@@ -55,7 +55,7 @@ const VertifyIdentity = () => {
   const handleForgotPassword = async () => {
     try {
       const response = await axios.post(
-        "http://3.133.94.246:8000/forgot-password",
+        `${import.meta.env.VITE_API_URL}/forgot-password`,
         {username: inputs.username},
         {
           headers: {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Container,
   List,
@@ -13,6 +13,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { Link, useNavigate } from "react-router-dom";
 import danse from "../images/danse.jpg";
 import axios from "axios";
+import { AuthContext } from "../context/authContext.jsx";
 
 // const todolists = [
 //   {
@@ -40,12 +41,13 @@ import axios from "axios";
 function Notes() {
   const [notes, setNotes] = useState([]);
   const navigate = useNavigate();
+  const { currentUser } = useContext(AuthContext);
 
   useEffect(() => {
     const getNotes = async () => {
       // console.log("Get notes");
       try {
-        const response = await axios.get("http://localhost:8000/notes", {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/notes`, {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
         });
@@ -80,63 +82,72 @@ function Notes() {
         sx={{
           paddingTop: "20px",
           paddingBottom: "20px",
+          marginTop: "20px",
         }}
       >
-        <Typography variant="h4" component="h1" gutterBottom>
-          My ToDos
-          <Button
-            variant="contained"
-            href="/write"
-            sx={{ marginLeft: "770px", width: "210px" }}
-          >
-            Create new todo
-          </Button>
-        </Typography>
+        {currentUser ? (
+          <>
+            <Typography variant="h4" component="h1" gutterBottom>
+              My ToDos
+              <Button
+                variant="contained"
+                href="/write"
+                sx={{ marginLeft: "770px", width: "210px" }}
+              >
+                Create new todo
+              </Button>
+            </Typography>
 
-        <List>
-          {notes.map((note) => (
-            <ListItem
-              key={note.id}
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <ListItemText
-                primary={note.title}
-                secondary={note.description}
-                primaryTypographyProps={{
-                  variant: "h6",
-                  sx: {
-                    wordWrap: "break-word",
-                    wordBreak: "break-all",
-                    whiteSpace: "pre-wrap",
-                  },
-                }}
-                secondaryTypographyProps={{
-                  sx: {
-                    wordWrap: "break-word",
-                    wordBreak: "break-all",
-                    whiteSpace: "pre-wrap",
-                  },
-                }}
-              />
-              <Box>
-                <Button
+            <List>
+              {notes.map((note) => (
+                <ListItem
+                  key={note.id}
                   sx={{
-                    mr: 2,
-                    width: "150px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
                   }}
-                  variant="outlined"
-                  onClick={() => handleNavigate(note)}
                 >
-                  Read More
-                </Button>
-              </Box>
-            </ListItem>
-          ))}
-        </List>
+                  <ListItemText
+                    primary={note.title}
+                    secondary={note.description}
+                    primaryTypographyProps={{
+                      variant: "h6",
+                      sx: {
+                        wordWrap: "break-word",
+                        wordBreak: "break-all",
+                        whiteSpace: "pre-wrap",
+                      },
+                    }}
+                    secondaryTypographyProps={{
+                      sx: {
+                        wordWrap: "break-word",
+                        wordBreak: "break-all",
+                        whiteSpace: "pre-wrap",
+                      },
+                    }}
+                  />
+                  <Box>
+                    <Button
+                      sx={{
+                        mr: 2,
+                        width: "150px",
+                      }}
+                      variant="outlined"
+                      onClick={() => handleNavigate(note)}
+                    >
+                      Read More
+                    </Button>
+                  </Box>
+                </ListItem>
+              ))}
+            </List>
+          </>
+        ) : (
+          <Typography variant="h4" color="secondary">
+            Please Login
+          </Typography>
+        )}
       </Container>
     </div>
   );

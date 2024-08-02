@@ -86,6 +86,24 @@ def confirm_sign_up(cognito_client, username, confirmation_code):
         )
     return response
 
+def verify_email_code(cognito_client, username, confirmation_code):
+    try:
+        response = cognito_client.verify_user_attribute(
+            AccessToken=get_user_access_token(username),
+            AttributeName='email',
+            Code=confirmation_code
+        )
+        return response
+    except cognito_client.exceptions.CodeMismatchException:
+        return {"error": "Invalid confirmation code"}
+    except Exception as e:
+        return {"message": str(e)}
+
+def get_user_access_token(username):
+    # Implement this function to retrieve the access token for the user.
+    # This typically involves authenticating the user and getting the token.
+    # You might need to use `cognito_client.admin_initiate_auth` or similar method to get the token.
+    pass
 
 # Resend code to email
 def resend_confirmation_code_to_email(cognito_client, username):

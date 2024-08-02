@@ -5,7 +5,7 @@ import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import backgroundImage from "../images/background.jpg";
 
-const Login = () => {
+const VertifyIdentity = () => {
   const [inputs, setInputs] = useState({
     username: "",
     email: "",
@@ -19,12 +19,12 @@ const Login = () => {
   const handleChange = (e) => {
     setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
-
+  
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
       const response = await axios.post(
-        "http://localhost:8000/vertify-identity",
+        `${import.meta.env.VITE_API_URL}/vertify-identity`,
         inputs,
         {
           withCredentials: true,
@@ -41,38 +41,39 @@ const Login = () => {
       if (response.data.message == "Username and email do not match") {
         alert("Username and email do not match");
       } else {
-        navigate("/confirm-user", {
-          state: {
-            email: inputs.email,
-          },
+        navigate("/reset-password", {
+          state: { email: inputs.email },
         });
-        await resendCode();
+        await handleForgotPassword();
       }
     } catch (err) {
       console.log("error is: ", err);
+      alert(err.response.data.errors)
     }
   };
 
-  const resendCode = async () => {
+  const handleForgotPassword = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:8000/resend_confirmation_code",
-        {},
+        `${import.meta.env.VITE_API_URL}/forgot-password`,
+        {username: inputs.username},
         {
           headers: {
             "Content-Type": "application/json",
           },
-          withCredentials: true,
         }
       );
-      if (response.data.success) {
-        alert("A new confirmation code has been sent to your email.");
+      alert("Password reset code sent to your email");
+    } catch (err) {
+      if (err.response) {
+        if (err.response.data.error.includes("LimitExceededException")) {
+          alert("Attempt limit exceeded, please try after some time.");
+        } else {
+          alert(`Error: ${err.response.data.error}`);
+        }
       } else {
-        alert("Error resending confirmation code.");
+        alert("Error sending password reset code");
       }
-    } catch (error) {
-      console.error("There was a problem with the axios request:", error);
-      alert("An error occurred while resending the code.");
     }
   };
 
@@ -149,4 +150,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default VertifyIdentity;

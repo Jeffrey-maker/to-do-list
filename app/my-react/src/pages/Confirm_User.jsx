@@ -11,43 +11,43 @@ const ConfirmUser = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { email } = location.state || {};
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const response = await axios.post(
-        "http://localhost:8000/confirm-user",
-        {
-          email: email,
-          code: confirmationCode,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL}/confirm-user`,
+          {
+            email: email,
+            code: confirmationCode,
           },
-          withCredentials: true,
-        }
-      );
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            withCredentials: true,
+          }
+        );
 
-      console.log(response.data);
-      if (response.data.message == "Email confirmed successfully!") {
-        navigate("/mfa-setup");
+        console.log(response.data);
+        if (response.data.message == "Email confirmed successfully!") {
+          navigate("/mfa-setup");
+        }
+        else {
+          setError("Invalid confirmation code.");
+        }
+      } catch (err) {
+        console.log(err);
+        alert(err.response.data.error)
       }
-      if (response.data.message == "User already confirmed!") {
-        navigate("/reset-password");
-      } else {
-        setError("Invalid confirmation code.");
-      }
-    } catch (err) {
-      console.log(err);
-      setError(err.response?.data?.errors || "An error occurred.");
     }
-  };
+    
 
   const resendCode = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:8000/resend_confirmation_code",
+        `${import.meta.env.VITE_API_URL}/resend_confirmation_code`,
         {},
         {
           headers: {
@@ -57,6 +57,7 @@ const ConfirmUser = () => {
         }
       );
       if (response.data.success) {
+
         alert("A new confirmation code has been sent to your email.");
       } else {
         alert("Error resending confirmation code.");

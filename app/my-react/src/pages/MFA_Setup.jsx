@@ -27,7 +27,7 @@ const MfaSetup = () => {
     const getSecretCode = async () => {
       console.log("CAll useffect verifyCode")
       try {
-        const response = await axios.get("http://localhost:8000/mfa-setup", {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/mfa-setup`, {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
         });
@@ -47,7 +47,7 @@ const MfaSetup = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/mfa-setup",
+        `${import.meta.env.VITE_API_URL}/mfa-setup`,
         {
           code: confirmationCode,
         },

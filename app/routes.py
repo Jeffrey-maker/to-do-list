@@ -11,7 +11,7 @@ from flask_login import login_user, login_required, logout_user, current_user
 import requests
 from werkzeug.utils import secure_filename
 from botocore.exceptions import ClientError
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 import pyotp
 import uuid
 import logging
@@ -34,9 +34,11 @@ from .db import (
     create_user,
     create_note,
 )
+from flask_cors import CORS, cross_origin
 
 logging.basicConfig(level=logging.DEBUG)
 main = Blueprint("main", __name__)
+
 logger = logging.getLogger(__name__)
 
 
@@ -57,6 +59,9 @@ def login():
     user = User.query.filter_by(username=username).first()
     if not user:
         return jsonify({"error": "User not found"}), 400
+
+    if not check_password_hash(user.password, password):
+        return jsonify({"error": "Incorrect password"}), 400
 
     cognito_client = get_cognito_client()
     email = user.email if user else None
@@ -101,9 +106,9 @@ def login():
                 return jsonify({"message": "Need MFA setup"}), 200
 
             # Store id token, access token and refresh token in session
-            session["id_token"] = id_token
-            session["access_token"] = access_token
-            session["refresh_token"] = refresh_token
+            # session["id_token"] = id_token
+            # session["access_token"] = access_token
+            # session["refresh_token"] = refresh_token
 
             user = User.query.filter_by(username=username).first()
             if not user:
@@ -178,6 +183,74 @@ def vertifyIdentity():
     except Exception as e:
         logger.error(f"An error occurred during verification: {str(e)}")
         return jsonify({"error": "An error occurred during verification"}), 500
+
+
+# When reset password, after verify identity, it will send email code to verify the user
+@main.route("/reset-password", methods=["POST"])
+def verifyEmail():
+    username = session.get("username")
+    if not username:
+        return jsonify({"error": "No username found in session"}), 400
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON"}), 400
+    new_password = data.get("password")
+    if not new_password:
+        return jsonify({"error": "Password is required"}), 400
+    verification_code = data.get("verification_code")
+    logger.debug(f"verivication code: {verification_code}" )
+    cognito_client = get_cognito_client()
+    
+    hashed_password = generate_password_hash(new_password, method="pbkdf2:sha256")
+
+    try:
+        secret_hash = get_secret_hash(
+            username,
+            current_app.config["COGNITO_APP_CLIENT_ID"],
+            current_app.config["COGNITO_APP_CLIENT_SECRET"],
+        )
+        response = cognito_client.confirm_forgot_password(
+            ClientId=current_app.config["COGNITO_APP_CLIENT_ID"],
+            Username=username,
+            ConfirmationCode=verification_code,
+            Password=new_password,
+            SecretHash=secret_hash
+        )
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        user.password = hashed_password
+        db.session.commit()
+        return jsonify({"message": "Reset password successful!"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@main.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    data = request.get_json()
+    username = data.get("username")
+    if not username:
+        return jsonify({"error": "No username found in session"}), 400
+
+    cognito_client = get_cognito_client()
+
+    try:
+        secret_hash = get_secret_hash(
+            username,
+            current_app.config["COGNITO_APP_CLIENT_ID"],
+            current_app.config["COGNITO_APP_CLIENT_SECRET"],
+        )
+        response = cognito_client.forgot_password(
+            ClientId=current_app.config["COGNITO_APP_CLIENT_ID"],
+            Username=username,
+            SecretHash=secret_hash
+        )
+        return jsonify({"message": "Password reset code sent"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
 
 
 # Register page
@@ -266,7 +339,7 @@ def confirm_user():
         session["Session"] = auth_response["Session"]
         return jsonify({"message": "Email confirmed successfully!"}), 200
     except ClientError as e:
-        return jsonify({"error": f"Confirmation error: {str(e)}"}), 400
+        return jsonify({"error": f"Confirmation code incorrect"}), 400
 
 
 # Resend code to email
@@ -274,6 +347,7 @@ def confirm_user():
 @login_required
 def resend_confirmation_code():
     username = session.get("username")
+    logger.debug("username in resend code", username)
     if not username:
         return jsonify(
             success=False,
@@ -355,6 +429,7 @@ def setup_mfa():
 
 # Check code from Google Authenticator
 @main.route("/mfa-verify", methods=["POST"])
+@cross_origin()
 @login_required
 def verify_mfa():
     data = request.get_json()
@@ -367,14 +442,18 @@ def verify_mfa():
             username=session["username"],
             otp=otp,
         )
+        logger.debug("Response in verify is: ", response)
         if "AuthenticationResult" in response:
             id_token = response["AuthenticationResult"]["IdToken"]
             access_token = response["AuthenticationResult"]["AccessToken"]
             refresh_token = response["AuthenticationResult"]["RefreshToken"]
-            session["id_token"] = id_token
-            session["access_token"] = access_token
-            session["refresh_token"] = refresh_token
-            return jsonify({"message": "MFA verify successfully!"}), 200
+            # session["id_token"] = id_token
+            # session["access_token"] = access_token
+            # session["refresh_token"] = refresh_token
+            response = jsonify({"message": "MFA verify successfully!"})
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
+            # return jsonify({"message": "MFA verify successfully!"}), 200
         else:
             flash("Invalid MFA code. Please try again.", "danger")
     except cognito_client.exceptions.NotAuthorizedException as e:
@@ -484,45 +563,7 @@ def edit_note(post_id):
     db.session.commit()
     return jsonify({"message": "Note updated successfully!"}), 200
 
-@main.route("/reset-password", methods=["PUT"])
-@login_required
-def resetPassword():
-    username = session.get("username")
-    if not username:
-        return jsonify({"error": "No username found in session"}), 400
 
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "Invalid JSON"}), 400
-    password = data.get("password")
-    if not password:
-        return jsonify({"error": "Password is required"}), 400
-    
-    cognito = get_cognito_client()
-    
-    hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
-    try:
-        # 更新 Cognito 中的密码
-        response = cognito.admin_set_user_password(
-            UserPoolId=current_app.config["COGNITO_USERPOOL_ID"],
-            Username=username,
-            Password=password,
-            Permanent=True
-        )
-        logger.debug(f"Password updated in Cognito: {response}")
-        user = User.query.filter_by(username=username).first()
-        if not user:
-            return jsonify({"error": "User not found"}), 404
-
-        user.password = hashed_password
-
-        db.session.commit()
-
-        flash("Password reset successfully!", "success")
-        return jsonify({"message": "Password reset successfully!"}), 200
-    except Exception as e:
-        current_app.logger.error(f"Error resetting password: {e}")
-        return jsonify({"error": "An error occurred while resetting the password"}), 500
 
 # Get title and description of notes
 @main.route("/notes", methods=["GET"])

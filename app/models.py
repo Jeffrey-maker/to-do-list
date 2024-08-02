@@ -1,3 +1,4 @@
+from enum import Enum
 from . import db
 import bcrypt
 from flask_login import UserMixin
@@ -20,3 +21,7 @@ class Note(db.Model):
     file_path = db.Column(db.String(300), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     author = db.relationship('User', backref=db.backref('notes', lazy=True))
+    deadline_date = db.Column(db.Date, nullable=True)  # Only the date part
+    deadline_time = db.Column(db.Time, nullable=True)  # Optional time part
+    flag = db.Column(db.Boolean, default=False, nullable=False)
+    priority = db.Column(Enum('none', 'low', 'medium', 'high', name='priority_levels'), default='none', nullable=False)
